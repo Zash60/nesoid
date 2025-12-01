@@ -151,10 +151,6 @@ public class NetPlayService {
 	}
 
 	public void sendSyncClientMessage() {
-		// Este método não existe no código original, mas é chamado em EmulatorActivity.
-		// Aparentemente, a intenção era sincronizar o cliente, mas o código não foi implementado.
-		// Como não temos o código original, vamos apenas garantir que o método exista para compilar.
-		// Se o usuário precisar de funcionalidade, ele terá que fornecer a implementação.
 	}
 
 	private void start(NetThread t) {
@@ -223,6 +219,15 @@ public class NetPlayService {
 
 	private void onConnectionLost() {
 		onConnectionFailed(E_CONNECTION_CLOSED);
+	}
+
+    // Helper methods to create packet with command in payload
+	private static ByteBuffer createPacket(short cmd, int len) {
+		return PacketOutputStream.createPacket(len + 2).putShort(cmd);
+	}
+
+	private static ByteBuffer createPacket(short cmd) {
+		return createPacket(cmd, 0);
 	}
 
 	private abstract class NetThread extends Thread {
