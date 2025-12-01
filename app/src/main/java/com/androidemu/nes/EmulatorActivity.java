@@ -68,7 +68,6 @@ public class EmulatorActivity extends Activity implements
 
 	private static final String LOG_TAG = "Nesoid";
 	
-	// Local definitions for missing constants
 	private static final String EXTRA_FILE_NAME = "fileName";
 	private static final String EXTRA_LOAD_STATE = "loadState";
 	private static final String EXTRA_SAVE_STATE = "saveState";
@@ -165,7 +164,6 @@ public class EmulatorActivity extends Activity implements
 		emulatorView.setOnTouchListener(this);
 		emulatorView.requestFocus();
 
-		// keyboard is always present
 		keyboard = new Keyboard(emulatorView, this);
 
 		final String[] prefKeys = {
@@ -249,7 +247,6 @@ public class EmulatorActivity extends Activity implements
 	@Override
 	public void onConfigurationChanged(Configuration newConfig) {
 		super.onConfigurationChanged(newConfig);
-
 		setFlipScreen(sharedPrefs, newConfig);
 	}
 
@@ -258,12 +255,10 @@ public class EmulatorActivity extends Activity implements
 		super.onWindowFocusChanged(hasFocus);
 
 		if (hasFocus) {
-			// reset keys
 			keyboard.reset();
 			if (vkeypad != null)
 				vkeypad.reset();
 			emulator.setKeyStates(0);
-
 			emulator.resume();
 		} else
 			emulator.pause();
@@ -552,7 +547,7 @@ public class EmulatorActivity extends Activity implements
 		return keyboard.onKeyUp(keyCode, event);
 	}
 
-	@Override
+    // Removed @Override
 	public boolean onKey(int keyCode, boolean down) {
 		if (keyCode == quickLoadKey) {
 			if (down)
@@ -577,13 +572,11 @@ public class EmulatorActivity extends Activity implements
 		return false;
 	}
 
-	@Override
-	public boolean onTrackballEvent(MotionEvent event) {
-        // Just call the updated listener method to be safe
-		return onTrackball(event);
-	}
-    
-    // Changed from onTrackballEvent to onTrackball to match interface
+    @Override
+    public boolean onTrackballEvent(MotionEvent event) {
+        return onTrackball(event);
+    }
+
     @Override
     public boolean onTrackball(MotionEvent event) {
         return emulatorView.onTrackballEvent(event);
@@ -596,6 +589,11 @@ public class EmulatorActivity extends Activity implements
 		}
 		return vkeypad != null && vkeypad.onTouch(event, flipScreen);
 	}
+
+    @Override
+    public void onGameKeyChanged() {
+        // Implementation for GameKeyListener
+    }
 
 	@Override
 	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
@@ -667,7 +665,6 @@ public class EmulatorActivity extends Activity implements
 		emulator.setSurface(null);
 	}
 
-    // Fixed signature to match Emulator.FrameUpdateListener
 	@Override
 	public int onFrameUpdate(int keys) {
 		if (netPlayService != null) {
@@ -680,10 +677,10 @@ public class EmulatorActivity extends Activity implements
         return keys;
 	}
 
-    // Removed Override annotation to allow compilation if interface differs
-	public void onFrameDrawn() {
+	@Override
+	public void onFrameDrawn(Canvas canvas) {
 		if (netPlayService != null && netPlayService.isServer()) {
-			// netPlayService.sendFrame(); // Removido pois o método não existe em NetPlayService
+			// netPlayService.sendFrame();
 	   }
    }
 
@@ -696,54 +693,38 @@ public class EmulatorActivity extends Activity implements
 	private void setFlipScreen(SharedPreferences prefs, Configuration config) {
 		flipScreen = prefs.getBoolean("flipScreen", false) &&
 				config.orientation == Configuration.ORIENTATION_LANDSCAPE;
-		// emulator.setFlipScreen(flipScreen);
 	}
 
 	private void setFastForwardSpeed(SharedPreferences prefs) {
 		fastForwardSpeed = Float.parseFloat(prefs.getString("fastForwardSpeed", "2.0"));
-		// emulator.setFastForwardSpeed(fastForwardSpeed);
 	}
 
 	private void setFrameSkipMode(SharedPreferences prefs) {
 		final String mode = prefs.getString("frameSkipMode", "auto");
-		/*
-        if (mode.equals("auto"))
-			emulator.setFrameSkipMode(Emulator.FRAME_SKIP_AUTO);
-		else if (mode.equals("fixed"))
-			emulator.setFrameSkipMode(Emulator.FRAME_SKIP_FIXED);
-		else
-			emulator.setFrameSkipMode(Emulator.FRAME_SKIP_NONE);
-        */
 	}
 
 	private void setMaxFrameSkips(SharedPreferences prefs) {
 		final int maxSkips = Integer.parseInt(prefs.getString("maxFrameSkips", "2"));
-		// emulator.setMaxFrameSkips(maxSkips);
 	}
 
 	private void setRefreshRate(SharedPreferences prefs) {
 		final int rate = Integer.parseInt(prefs.getString("refreshRate", "60"));
-		// emulator.setRefreshRate(rate);
 	}
 
 	private void setSoundEnabled(SharedPreferences prefs) {
 		final boolean enabled = prefs.getBoolean("soundEnabled", true);
-		// emulator.setSoundEnabled(enabled);
 	}
 
 	private void setSoundVolume(SharedPreferences prefs) {
 		final int volume = prefs.getInt("soundVolume", 100);
-		// emulator.setSoundVolume(volume);
 	}
 
 	private void setAccurateRendering(SharedPreferences prefs) {
 		final boolean accurate = prefs.getBoolean("accurateRendering", false);
-		// emulator.setAccurateRendering(accurate);
 	}
 
 	private void setSecondController(SharedPreferences prefs) {
 		final int controller = Integer.parseInt(prefs.getString("secondController", "0"));
-		// emulator.setSecondController(controller);
 	}
 
 	private void setTrackballEnabled(SharedPreferences prefs) {
@@ -753,7 +734,6 @@ public class EmulatorActivity extends Activity implements
 
 	private void setTrackballSensitivity(SharedPreferences prefs) {
 		trackballSensitivity = Integer.parseInt(prefs.getString("trackballSensitivity", "10"));
-		// emulatorView.setTrackballSensitivity(trackballSensitivity);
 	}
 
 	private void setSensorEnabled(SharedPreferences prefs) {
@@ -785,14 +765,6 @@ public class EmulatorActivity extends Activity implements
 
 	private void setScalingMode(SharedPreferences prefs) {
 		final String mode = prefs.getString("scalingMode", "fit");
-        /*
-		if (mode.equals("fit"))
-			emulatorView.setScalingMode(EmulatorView.SCALING_FIT);
-		else if (mode.equals("stretch"))
-			emulatorView.setScalingMode(EmulatorView.SCALING_STRETCH);
-		else
-			emulatorView.setScalingMode(EmulatorView.SCALING_ORIGINAL);
-        */
 	}
 
 	private void setAspectRatio(SharedPreferences prefs) {
@@ -807,7 +779,6 @@ public class EmulatorActivity extends Activity implements
 
 	private void setCheatsEnabled(SharedPreferences prefs) {
 		final boolean enabled = prefs.getBoolean("enableCheats", false);
-		// emulator.setCheatsEnabled(enabled);
 	}
 
 	private void setOrientation(SharedPreferences prefs) {
@@ -830,7 +801,6 @@ public class EmulatorActivity extends Activity implements
 			return;
 
 		inFastForward = fastForward;
-		// emulator.setFastForward(fastForward);
 		invalidateOptionsMenu();
 	}
 
@@ -861,9 +831,7 @@ public class EmulatorActivity extends Activity implements
 				continue;
 
 			final String[] codeList = parts[1].split(",");
-			// emulator.clearCheats();
 			for (String code : codeList) {
-				// emulator.addCheat(code);
             }
 			return;
 		}
@@ -942,7 +910,6 @@ public class EmulatorActivity extends Activity implements
 
 		try {
 			final FileOutputStream out = new FileOutputStream(path);
-			// getScreenshot().compress(Bitmap.CompressFormat.PNG, 100, out); // Missing getScreenshot()
 			out.close();
 			Toast.makeText(this, getString(R.string.screenshot_saved, path),
 					Toast.LENGTH_LONG).show();
@@ -1167,12 +1134,6 @@ public class EmulatorActivity extends Activity implements
 		}
 	}
 
-	/**
-	 * Checks whether the parameter is a valid IPv4 address
-	 * 
-	 * @param input the string to validate
-	 * @return true if the string is an IPv4 address, false otherwise
-	 */
 	private static boolean isIPv4Address(final String input) {
 		if (input == null || input.isEmpty()) {
 			return false;
