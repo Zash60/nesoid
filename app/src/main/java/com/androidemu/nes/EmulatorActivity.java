@@ -56,6 +56,7 @@ import com.androidemu.EmulatorView;
 import com.androidemu.EmuMedia;
 import com.androidemu.nes.input.*;
 import com.androidemu.nes.wrapper.Wrapper;
+import com.androidemu.Emulator;
 
 public class EmulatorActivity extends Activity implements
 		Emulator.FrameUpdateListener,
@@ -660,7 +661,7 @@ public class EmulatorActivity extends Activity implements
 	@Override
 	public void onFrameDrawn() {
 		if (netPlayService != null && netPlayService.isServer())
-			netPlayService.sendFrame();
+			// netPlayService.sendFrame(); // Removido pois o método não existe em NetPlayService
 	}
 
 	private void setFullScreenMode(SharedPreferences prefs) {
@@ -959,8 +960,8 @@ public class EmulatorActivity extends Activity implements
 			return;
 		}
 
-		netPlayService = new NetPlayService(this, emulator);
-		netPlayService.startServer();
+		netPlayService = new NetPlayService(syncClientHandler);
+		netPlayService.bluetoothListen();
 		Toast.makeText(this, R.string.netplay_server_started, Toast.LENGTH_LONG).show();
 	}
 
@@ -985,8 +986,8 @@ public class EmulatorActivity extends Activity implements
 	}
 
 	private void startNetPlayClient(String address) {
-		netPlayService = new NetPlayService(this, emulator);
-		netPlayService.startClient(address);
+		netPlayService = new NetPlayService(syncClientHandler);
+		netPlayService.bluetoothConnect(address);
 		Toast.makeText(this, R.string.netplay_client_started, Toast.LENGTH_LONG).show();
 	}
 
@@ -1026,8 +1027,8 @@ public class EmulatorActivity extends Activity implements
 			return;
 		}
 
-		netPlayService = new NetPlayService(this, emulator);
-		netPlayService.startClient(addr, port);
+		netPlayService = new NetPlayService(syncClientHandler);
+		netPlayService.tcpConnect(addr, port);
 		Toast.makeText(this, R.string.netplay_client_started, Toast.LENGTH_LONG).show();
 	}
 
@@ -1047,7 +1048,7 @@ public class EmulatorActivity extends Activity implements
 	}
 
 	private void sendSyncClientMessage() {
-		if (netPlayService != null && netPlayService.isClient()) {
+		if (netPlayService != null && !netPlayService.isServer()) {
 			netPlayService.sendSyncClientMessage();
 			syncClientHandler.sendEmptyMessageDelayed(MESSAGE_SYNC_CLIENT,
 					autoSyncClientInterval * 1000);
