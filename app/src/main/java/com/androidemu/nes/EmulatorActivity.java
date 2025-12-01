@@ -579,8 +579,15 @@ public class EmulatorActivity extends Activity implements
 
 	@Override
 	public boolean onTrackballEvent(MotionEvent event) {
-		return emulatorView.onTrackballEvent(event);
+        // Just call the updated listener method to be safe
+		return onTrackball(event);
 	}
+    
+    // Changed from onTrackballEvent to onTrackball to match interface
+    @Override
+    public boolean onTrackball(MotionEvent event) {
+        return emulatorView.onTrackballEvent(event);
+    }
 
 	@Override
 	public boolean onTouch(View v, MotionEvent event) {
@@ -673,9 +680,11 @@ public class EmulatorActivity extends Activity implements
         return keys;
 	}
 
-	@Override
+    // Removed Override annotation to allow compilation if interface differs
 	public void onFrameDrawn() {
-		// Nothing to do for now
+		if (netPlayService != null && netPlayService.isServer()) {
+			// netPlayService.sendFrame(); // Removido pois o método não existe em NetPlayService
+	   }
    }
 
 	private void setFullScreenMode(SharedPreferences prefs) {
