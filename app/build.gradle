@@ -11,7 +11,7 @@ android {
 
     defaultConfig {
         applicationId "com.androidemu.nes"
-        minSdk 16
+        minSdk 21
         targetSdk 34
         versionCode 61
         versionName "2.5"
