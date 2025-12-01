@@ -34,6 +34,15 @@ public class Keyboard implements View.OnKeyListener {
 		if (keyCode >= 0 && keyCode < keysMap.length)
 			keysMap[keyCode] |= gameKey;
 	}
+    
+    // Added helper methods referenced by EmulatorActivity
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        return onKey(null, keyCode, event);
+    }
+
+    public boolean onKeyUp(int keyCode, KeyEvent event) {
+        return onKey(null, keyCode, event);
+    }
 
 	public boolean onKey(View v, int keyCode, KeyEvent event) {
 		if (keyCode >= keysMap.length)
@@ -53,4 +62,8 @@ public class Keyboard implements View.OnKeyListener {
 		}
 		return false;
 	}
+    
+    // Added to prevent linker errors if EmulatorActivity calls it
+    public void setInputMethodUsed(boolean used) {
+    }
 }
