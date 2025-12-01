@@ -22,143 +22,129 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
-import android.support.v4.app.NotificationCompat;
+import androidx.core.app.NotificationCompat;
 import android.util.Log;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-/**
- * This is an example of implementing an application service that can
- * run in the "foreground".  It shows how to code this to work well by using
- * the improved Android 2.0 APIs when available and otherwise falling back
- * to the original APIs.  Yes: you can take this exact code, compile it
- * against the Android 2.0 SDK, and it will against everything down to
- * Android 1.0.
- */
 public class EmulatorService extends Service {
-    static final String ACTION_FOREGROUND = "com.androidemu.actions.FOREGROUND";
-    static final String ACTION_BACKGROUND = "com.androidemu.actions.BACKGROUND";
 
-	private static final String LOG_TAG = "EmulatorService";
-    
-    private static final Class[] mStartForegroundSignature = new Class[] {
-        int.class, Notification.class};
-    private static final Class[] mStopForegroundSignature = new Class[] {
-        boolean.class};
-    
-    private NotificationManager mNM;
-    private Method mStartForeground;
-    private Method mStopForeground;
-    private final Object[] mStartForegroundArgs = new Object[2];
-    private final Object[] mStopForegroundArgs = new Object[1];
-    
-    @Override
-    public void onCreate() {
-        mNM = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
-        try {
-            mStartForeground = getClass().getMethod("startForeground",
-                    mStartForegroundSignature);
-            mStopForeground = getClass().getMethod("stopForeground",
-                    mStopForegroundSignature);
-        } catch (NoSuchMethodException e) {
-            // Running on an older platform.
-            mStartForeground = mStopForeground = null;
-        }
-    }
+	private static final String TAG = "EmulatorService";
 
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        handleCommand(intent);
-        // We want this service to continue running until it is explicitly
-        // stopped, so return sticky.
-        return START_STICKY_COMPATIBILITY;
-    }
+	private static final Class<?>[] mSetForegroundSignature = new Class[] {
+		boolean.class
+	};
+	private static final Class<?>[] mStartForegroundSignature = new Class[] {
+		int.class, Notification.class
+	};
+	private static final Class<?>[] mStopForegroundSignature = new Class[] {
+		boolean.class
+	};
 
-    void handleCommand(Intent intent) {
-        if (ACTION_FOREGROUND.equals(intent.getAction())) {
-            // In this sample, we'll use the same text for the ticker and the expanded notification
-            CharSequence text = getText(R.string.emulator_service_running);
+	private NotificationManager mNM;
+	private Method mSetForeground;
+	private Method mStartForeground;
+	private Method mStopForeground;
+	private Object[] mSetForegroundArgs = new Object[1];
+	private Object[] mStartForegroundArgs = new Object[2];
+	private Object[] mStopForegroundArgs = new Object[1];
 
-            // The PendingIntent to launch our activity if the user selects this notification
-            PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
-                    new Intent(this, EmulatorActivity.class), PendingIntent.FLAG_UPDATE_CURRENT);
+	void invokeMethod(Method method, Object[] args) {
+		try {
+			method.invoke(this, args);
+		} catch (InvocationTargetException e) {
+			// Should not happen.
+			Log.w(TAG, "Unable to invoke method " + method, e);
+		} catch (IllegalAccessException e) {
+			// Should not happen.
+			Log.w(TAG, "Unable to invoke method " + method, e);
+		}
+	}
 
-            // Set the icon, scrolling text and timestamp
-            Notification notification = new NotificationCompat.Builder(this)
-                    .setSmallIcon(R.mipmap.ic_launcher)
-                    .setContentTitle(text)
-                    .setContentIntent(contentIntent)
-                    .setWhen(System.currentTimeMillis())
-                    .build();
-            
-            startForegroundCompat(R.string.emulator_service_running, notification);
-            
-        } else if (ACTION_BACKGROUND.equals(intent.getAction())) {
-            stopForegroundCompat(R.string.emulator_service_running);
-        }
-    }
-    
-    /**
-     * This is a wrapper around the new startForeground method, using the older
-     * APIs if it is not available.
-     */
-    void startForegroundCompat(int id, Notification notification) {
-        // If we have the new startForeground API, then use it.
-        if (mStartForeground != null) {
-            mStartForegroundArgs[0] = id;
-            mStartForegroundArgs[1] = notification;
-            try {
-                mStartForeground.invoke(this, mStartForegroundArgs);
-            } catch (InvocationTargetException e) {
-                // Should not happen.
-                Log.w(LOG_TAG, "Unable to invoke startForeground", e);
-            } catch (IllegalAccessException e) {
-                // Should not happen.
-                Log.w(LOG_TAG, "Unable to invoke startForeground", e);
-            }
-            return;
-        }
-        
-        // Fall back on the old API.
-//        setForeground(true);
-        mNM.notify(id, notification);
-    }
-    
-    /**
-     * This is a wrapper around the new stopForeground method, using the older
-     * APIs if it is not available.
-     */
-    void stopForegroundCompat(int id) {
-        // If we have the new stopForeground API, then use it.
-        if (mStopForeground != null) {
-            mStopForegroundArgs[0] = Boolean.TRUE;
-            try {
-                mStopForeground.invoke(this, mStopForegroundArgs);
-            } catch (InvocationTargetException e) {
-                // Should not happen.
-                Log.w(LOG_TAG, "Unable to invoke stopForeground", e);
-            } catch (IllegalAccessException e) {
-                // Should not happen.
-                Log.w(LOG_TAG, "Unable to invoke stopForeground", e);
-            }
-            return;
-        }
-        
-        // Fall back on the old API.  Note to cancel BEFORE changing the
-        // foreground state, since we could be killed at that point.
-        mNM.cancel(id);
-//        setForeground(false);
-    }
-    
-    @Override
-    public void onDestroy() {
-        // Make sure our notification is gone.
-        stopForegroundCompat(R.string.emulator_service_running);
-    }
+	/**
+	 * This is a wrapper around the new [startForeground(int, Notification)][android.app.Service.startForeground]
+	 * method, using the older [setForeground(boolean)][android.app.Service.setForeground] if it is not available.
+	 */
+	void startForegroundCompat(int id, Notification notification) {
+		// If we have the new startForeground API, then use it.
+		if (mStartForeground != null) {
+			mStartForegroundArgs[0] = Integer.valueOf(id);
+			mStartForegroundArgs[1] = notification;
+			invokeMethod(mStartForeground, mStartForegroundArgs);
+			return;
+		}
 
-    @Override
-    public IBinder onBind(Intent intent) {
-        return null;
-    }
+		// Fall back on the old API.
+		mSetForegroundArgs[0] = Boolean.TRUE;
+		invokeMethod(mSetForeground, mSetForegroundArgs);
+		mNM.notify(id, notification);
+	}
+
+	/**
+	 * This is a wrapper around the new [stopForeground(boolean)][android.app.Service.stopForeground] method,
+	 * using the older [setForeground(boolean)][android.app.Service.setForeground] if it is not available.
+	 */
+	void stopForegroundCompat(int id) {
+		// If we have the new stopForeground API, then use it.
+		if (mStopForeground != null) {
+			mStopForegroundArgs[0] = Boolean.TRUE;
+			invokeMethod(mStopForeground, mStopForegroundArgs);
+			return;
+		}
+
+		// Fall back on the old API.  Note that we need to cancel the notification
+		// as well as clear the foreground state.
+		mNM.cancel(id);
+		mSetForegroundArgs[0] = Boolean.FALSE;
+		invokeMethod(mSetForeground, mSetForegroundArgs);
+	}
+
+	@Override
+	public void onCreate() {
+		mNM = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+		try {
+			mStartForeground = getClass().getMethod("startForeground", mStartForegroundSignature);
+			mStopForeground = getClass().getMethod("stopForeground", mStopForegroundSignature);
+		} catch (NoSuchMethodException e) {
+			// Running on an older platform.
+			mStartForeground = mStopForeground = null;
+		}
+		try {
+			mSetForeground = getClass().getMethod("setForeground", mSetForegroundSignature);
+		} catch (NoSuchMethodException e) {
+			throw new IllegalStateException("OS doesn't have Service.setForeground!");
+		}
+	}
+
+	@Override
+	public void onDestroy() {
+		// Make sure our notification is gone.
+		stopForegroundCompat(R.string.app_name);
+	}
+
+	@Override
+	public int onStartCommand(Intent intent, int flags, int startId) {
+		// The service is started, so make it a foreground service.
+		Intent notificationIntent = new Intent(this, EmulatorActivity.class);
+		PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+
+		Notification notification = new NotificationCompat.Builder(this)
+			.setSmallIcon(R.drawable.icon)
+			.setTicker(getText(R.string.service_started))
+			.setContentTitle(getText(R.string.app_name))
+			.setContentText(getText(R.string.service_started))
+			.setContentIntent(pendingIntent)
+			.build();
+
+		startForegroundCompat(R.string.app_name, notification);
+
+		// We want this service to continue running until it is explicitly stopped, so return sticky.
+		return START_STICKY;
+	}
+
+	@Override
+	public IBinder onBind(Intent intent) {
+		return null;
+	}
 }
