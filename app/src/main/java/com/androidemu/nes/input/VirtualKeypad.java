@@ -17,7 +17,6 @@ import java.util.ArrayList;
 
 import com.androidemu.Emulator;
 import com.androidemu.nes.R;
-import com.androidemu.nes.wrapper.Wrapper;
 
 public class VirtualKeypad {
     private static final int[] DPAD_4WAY = {
@@ -106,7 +105,6 @@ public class VirtualKeypad {
 
         float controlScale = getControlScale(prefs);
 
-        // CORRIGIDO: parênteses certos
         scaleX = ((float) w / view.getWidth()) * controlScale;
         scaleY = ((float) h / view.getHeight()) * controlScale;
 
@@ -236,13 +234,13 @@ public class VirtualKeypad {
     }
 
     private float getEventX(MotionEvent ev, int idx, boolean flip) {
-        float x = Wrapper.MotionEvent_getX(ev, idx);
+        float x = ev.getX(idx);
         if (flip) x = view.getWidth() - x;
         return x * scaleX;
     }
 
     private float getEventY(MotionEvent ev, int idx, boolean flip) {
-        float y = Wrapper.MotionEvent_getY(ev, idx);
+        float y = ev.getY(idx);
         if (flip) y = view.getHeight() - y;
         return y * scaleY;
     }
@@ -267,7 +265,7 @@ public class VirtualKeypad {
 
     public boolean onTouch(MotionEvent event, boolean flip) {
         int action = event.getActionMasked();
-        int pointerCount = Wrapper.MotionEvent_getPointerCount(event);
+        int pointerCount = event.getPointerCount();
 
         if ((action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) && pointerCount <= 1) {
             setKeyStates(0);
@@ -281,7 +279,7 @@ public class VirtualKeypad {
 
             Control c = findControl(x, y);
             if (c != null && c.isEnabled() && !c.hidden) {
-                float size = Wrapper.MotionEvent_getSize(event, i);
+                float size = event.getSize(i);
                 states |= getControlStates(c, x, y, size);
             }
         }
@@ -326,4 +324,4 @@ public class VirtualKeypad {
                 canvas.drawBitmap(bitmap, bounds.left, bounds.top, paint);
         }
     }
-             }
+}
