@@ -49,7 +49,6 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
-// import org.apache.http.conn.util.InetAddressUtils; // Substituído por método local
 
 import com.androidemu.Emulator;
 import com.androidemu.EmulatorView;
@@ -260,7 +259,7 @@ public class EmulatorActivity extends Activity implements
 
 		if (hasFocus) {
 			// reset keys
-			// keyboard.reset(); // Method missing in Keyboard class
+			keyboard.reset();
 			if (vkeypad != null)
 				vkeypad.reset();
 			emulator.setKeyStates(0);
@@ -540,8 +539,7 @@ public class EmulatorActivity extends Activity implements
 			return true;
 		}
 
-		// return keyboard.onKeyDown(keyCode, event);
-        return super.onKeyDown(keyCode, event);
+		return keyboard.onKeyDown(keyCode, event);
 	}
 
 	@Override
@@ -551,8 +549,7 @@ public class EmulatorActivity extends Activity implements
 			return true;
 		}
 
-		// return keyboard.onKeyUp(keyCode, event);
-        return super.onKeyUp(keyCode, event);
+		return keyboard.onKeyUp(keyCode, event);
 	}
 
 	@Override
@@ -590,8 +587,7 @@ public class EmulatorActivity extends Activity implements
 		if (gestureDetector.onTouchEvent(event)) {
 			return true;
 		}
-		// return vkeypad != null && vkeypad.onTouch(v, event);
-        return vkeypad != null && vkeypad.onTouch(v, event);
+		return vkeypad != null && vkeypad.onTouch(event, flipScreen);
 	}
 
 	@Override
@@ -664,16 +660,22 @@ public class EmulatorActivity extends Activity implements
 		emulator.setSurface(null);
 	}
 
+    // Fixed signature to match Emulator.FrameUpdateListener
 	@Override
-	public void onFrameUpdate(int keys) {
-		emulatorView.postInvalidate();
+	public int onFrameUpdate(int keys) {
+		if (netPlayService != null) {
+            try {
+                return netPlayService.sendFrameUpdate(keys);
+            } catch (Exception e) {
+                // Ignore errors for now
+            }
+        }
+        return keys;
 	}
 
 	@Override
 	public void onFrameDrawn() {
-		if (netPlayService != null && netPlayService.isServer()) {
-			// netPlayService.sendFrame(); // Removido pois o método не existe em NetPlayService
-	   }
+		// Nothing to do for now
    }
 
 	private void setFullScreenMode(SharedPreferences prefs) {
@@ -811,7 +813,7 @@ public class EmulatorActivity extends Activity implements
 
 	private void setInputMethodUsed(SharedPreferences prefs) {
 		final boolean used = prefs.getBoolean("useInputMethod", false);
-		// keyboard.setInputMethodUsed(used);
+		keyboard.setInputMethodUsed(used);
 	}
 
 	private void setFastForward(boolean fastForward) {
