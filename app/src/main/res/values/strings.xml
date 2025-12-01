@@ -3,6 +3,8 @@
 <resources>
 	<!-- The name of the application. -->
 	<string name="app_label">Nesoid</string>
+	<string name="app_name">Nesoid</string>
+	<string name="service_started">Service started</string>
 	<string name="emulator_service_running">Nesoid is running.</string>
 	<string name="launcher_shortcut_name">NES game</string>
 
@@ -23,8 +25,12 @@
 	<string name="load_rom_failed">Load ROM failed. Please try another file.</string>
 	<string name="rom_not_supported">ROM file type is not supported.</string>
 	<string name="replace_game_title">Replace Game</string>
+	<string name="replace_game">Replace Game</string>
+	<string name="replace_game_confirm">Start playing the new game? The current game WILL NOT be saved.</string>
 	<string name="replace_game_message">Start playing the new game? The current game <b>WILL NOT</b> be saved.</string>
 	<string name="quit_game_title">Close game</string>
+	<string name="quit_game">Close game</string>
+	<string name="quit_game_confirm">Are you sure you want to quit?</string>
 	<string name="load_state_title">Load state</string>
 	<string name="save_state_title">Save state</string>
 
@@ -195,6 +201,16 @@
 	<string name="gamepad_A_turbo">Button A (turbo)</string>
 	<string name="gamepad_B_turbo">Button B (turbo)</string>
 	<string name="gamepad_AB">Button A&amp;B</string>
+
+    <string name="wifi_connect">Wifi Connect</string>
+    <string name="netplay">NetPlay</string>
+    <string name="bluetooth_not_supported">Bluetooth not supported</string>
+    <string name="netplay_server_started">Server started</string>
+    <string name="netplay_client_started">Client started</string>
+    <string name="netplay_server_bluetooth">Bluetooth (Server)</string>
+    <string name="netplay_client_bluetooth">Bluetooth (Client)</string>
+    <string name="netplay_server_wifi">WiFi (Server)</string>
+    <string name="netplay_client_wifi">WiFi (Client)</string>
 
 	<string-array name="exit_game_options">
 		<item>Back to game</item>
