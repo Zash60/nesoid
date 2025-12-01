@@ -209,7 +209,8 @@ LOCAL_LDLIBS := -lz -llog
 LOCAL_DISABLE_FATAL_LINKER_WARNINGS = true
 
 # Special compiler flags.
-LOCAL_CFLAGS += -O3 -fvisibility=hidden
+# Added -fcommon to fix duplicate symbol errors
+LOCAL_CFLAGS += -O3 -fvisibility=hidden -fcommon
 
 LOCAL_CFLAGS += \
 	-DHAVE_ASPRINTF \
