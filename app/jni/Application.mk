@@ -1,3 +1,4 @@
-APP_ABI := armeabi armeabi-v7a
+# Configure to build only for 32-bit ARM as requested
+APP_ABI := armeabi-v7a
 APP_PLATFORM := android-21
-APP_PIE := true
+APP_STL := c++_static
