@@ -214,7 +214,8 @@ LOCAL_LDLIBS := -lz -llog
 LOCAL_DISABLE_FATAL_LINKER_WARNINGS = true
 
 # Special compiler flags.
-LOCAL_CFLAGS += -O3 -fvisibility=hidden -fno-integrated-as
+# Removed -fno-integrated-as to fix build error
+LOCAL_CFLAGS += -O3 -fvisibility=hidden
 
 LOCAL_CFLAGS += \
 	-DHAVE_ASPRINTF \
@@ -231,4 +232,3 @@ LOCAL_CFLAGS += \
 LOCAL_PRELINK_MODULE := false
 
 include $(BUILD_SHARED_LIBRARY)
-
