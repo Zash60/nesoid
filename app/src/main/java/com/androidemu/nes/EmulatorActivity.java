@@ -547,7 +547,6 @@ public class EmulatorActivity extends Activity implements
 		return keyboard.onKeyUp(keyCode, event);
 	}
 
-    // Removed @Override
 	public boolean onKey(int keyCode, boolean down) {
 		if (keyCode == quickLoadKey) {
 			if (down)
@@ -880,9 +879,8 @@ public class EmulatorActivity extends Activity implements
 	
 	private void loadState(String fileName) {
 		pauseEmulator();
-		try {
-			emulator.loadState(fileName);
-		} catch (IOException ignored) {}
+        // Removed try-catch because loadState apparently does not throw IOException
+		emulator.loadState(fileName);
 		resumeEmulator();
 	}
 	
