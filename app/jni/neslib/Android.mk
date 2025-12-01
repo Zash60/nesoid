@@ -191,7 +191,7 @@ ifeq ($(TARGET_ARCH),arm)
         giz_blit_rev.s
 else
     # Use C implementation for non-ARM32 architectures (arm64, x86, etc.)
-    LOCAL_SRC_FILES += x6502.c
+    LOCAL_SRC_FILES += x6502.c drivers/android/blit_generic.c
 endif
 
 LOCAL_SRC_FILES += \
@@ -209,7 +209,6 @@ LOCAL_LDLIBS := -lz -llog
 LOCAL_DISABLE_FATAL_LINKER_WARNINGS = true
 
 # Special compiler flags.
-# Added -fcommon to fix duplicate symbol errors
 LOCAL_CFLAGS += -O3 -fvisibility=hidden -fcommon
 
 LOCAL_CFLAGS += \
