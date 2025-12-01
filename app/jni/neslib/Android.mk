@@ -3,8 +3,6 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE_TAGS := user
 
-#LOCAL_ARM_MODE := arm
-
 # This is the target being built.
 LOCAL_MODULE := libnes
 
@@ -184,26 +182,23 @@ LOCAL_SRC_FILES := \
 	zlib/unzip.c \
 	zlib/ioapi.c
 
-LOCAL_CFLAGS += -DASM_6502
-LOCAL_SRC_FILES += \
-	ncpu.S \
-	giz_blit.s \
-	giz_blit_rev.s
+# Configure CPU core based on architecture
+ifeq ($(TARGET_ARCH),arm)
+    LOCAL_CFLAGS += -DASM_6502
+    LOCAL_SRC_FILES += \
+        ncpu.S \
+        giz_blit.s \
+        giz_blit_rev.s
+else
+    # Use C implementation for non-ARM32 architectures (arm64, x86, etc.)
+    LOCAL_SRC_FILES += x6502.c
+endif
 
 LOCAL_SRC_FILES += \
 	drivers/android/debug.c \
 	drivers/android/file.c \
 	drivers/android/netplay.c \
 	drivers/android/nesengine.cpp
-
-# All of the shared libraries we link against.
-#LOCAL_SHARED_LIBRARIES := \
-#	libutils \
-#	libz
-
-# Static libraries.
-#LOCAL_STATIC_LIBRARIES := \
-#	libunz
 
 # Also need the JNI headers.
 LOCAL_C_INCLUDES += \
@@ -214,7 +209,6 @@ LOCAL_LDLIBS := -lz -llog
 LOCAL_DISABLE_FATAL_LINKER_WARNINGS = true
 
 # Special compiler flags.
-# Removed -fno-integrated-as to fix build error
 LOCAL_CFLAGS += -O3 -fvisibility=hidden
 
 LOCAL_CFLAGS += \
@@ -224,11 +218,7 @@ LOCAL_CFLAGS += \
 	-DFRAMESKIP=1 \
 	-DZLIB
 
-# Don't prelink this library.  For more efficient code, you may want
-# to add this library to the prelink map and set this to true. However,
-# it's difficult to do this for applications that are not supplied as
-# part of a system image.
-
+# Don't prelink this library.
 LOCAL_PRELINK_MODULE := false
 
 include $(BUILD_SHARED_LIBRARY)
