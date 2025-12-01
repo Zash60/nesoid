@@ -42,7 +42,6 @@ public class VirtualKeypad {
 
     private final Vibrator vibrator;
     private boolean vibratorEnabled = true;
-
     private boolean dpad4Way = false;
     private float dpadDeadZone = DPAD_DEADZONE_VALUES[2];
     private float pointSizeThreshold = 1.0f;
@@ -57,12 +56,12 @@ public class VirtualKeypad {
     private final Paint paint = new Paint();
 
     private static final int[] BUTTONS = { Emulator.GAMEPAD_B, Emulator.GAMEPAD_A };
-    private final int[] EXTRA_BUTTONS = { Emulator.GAMEPAD_B_TURBO, Emulator.GAMEPAD_A_TURBO };
+    private static final int[] EXTRA_BUTTONS = { Emulator.GAMEPAD_B_TURBO, Emulator.GAMEPAD_A_TURBO };
 
     public VirtualKeypad(View v, GameKeyListener l) {
         view = v;
         context = view.getContext();
-        gameListener = l;
+        gameKeyListener = l;
 
         vibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
 
@@ -106,8 +105,10 @@ public class VirtualKeypad {
         selectStart.hide(prefs.getBoolean("hideSelectStart", false));
 
         float controlScale = getControlScale(prefs);
-        scaleX = (float) w / view.getWidth()) * controlScale;
-        scaleY = (float) h / view.getHeight()) * controlScale;
+
+        // CORRIGIDO: parênteses certos
+        scaleX = ((float) w / view.getWidth()) * controlScale;
+        scaleY = ((float) h / view.getHeight()) * controlScale;
 
         Resources res = context.getResources();
         for (Control c : controls) {
@@ -197,7 +198,7 @@ public class VirtualKeypad {
             vibrator.vibrate(33);
 
         keyStates = newStates;
-        gameListener.onGameKeyChanged();
+        gameKeyListener.onGameKeyChanged();
     }
 
     private int get4WayDirection(float x, float y) {
@@ -264,12 +265,10 @@ public class VirtualKeypad {
         return 0;
     }
 
-    // MULTI-TOUCH CORRIGIDO - FUNCIONA PERFEITAMENTE
     public boolean onTouch(MotionEvent event, boolean flip) {
         int action = event.getActionMasked();
         int pointerCount = Wrapper.MotionEvent_getPointerCount(event);
 
-        // Só solta tudo quando o ÚLTIMO dedo sair
         if ((action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) && pointerCount <= 1) {
             setKeyStates(0);
             return true;
@@ -327,4 +326,4 @@ public class VirtualKeypad {
                 canvas.drawBitmap(bitmap, bounds.left, bounds.top, paint);
         }
     }
-}
+             }
