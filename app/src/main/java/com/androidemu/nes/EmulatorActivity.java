@@ -660,7 +660,7 @@ public class EmulatorActivity extends Activity implements
 
 	@Override
 	public void onFrameDrawn() {
-		if (netPlayService != null && netPlayService.isServer())
+		if (netPlayService != null && netPlayService.isServer()) {
 			// netPlayService.sendFrame(); // Removido pois o método não existe em NetPlayService
 	   }
    }
