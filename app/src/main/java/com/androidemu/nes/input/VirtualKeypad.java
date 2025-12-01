@@ -20,7 +20,6 @@ import com.androidemu.nes.R;
 import com.androidemu.nes.wrapper.Wrapper;
 
 public class VirtualKeypad {
-
     private static final int[] DPAD_4WAY = {
             Emulator.GAMEPAD_LEFT,
             Emulator.GAMEPAD_UP,
@@ -34,18 +33,20 @@ public class VirtualKeypad {
 
     private final Context context;
     private final View view;
-    private float scaleX;
-    private float scaleY;
-    private int transparency;
+    private float scaleX = 1.0f;
+    private float scaleY = 1.0f;
+    private int transparency = 50;
 
     private final GameKeyListener gameKeyListener;
-    private int keyStates;
+    private int keyStates = 0;
+
     private final Vibrator vibrator;
-    private boolean vibratorEnabled;
-    private boolean dpad4Way;
+    private boolean vibratorEnabled = true;
+
+    private boolean dpad4Way = false;
     private float dpadDeadZone = DPAD_DEADZONE_VALUES[2];
-    private float pointSizeThreshold;
-    private boolean inBetweenPress;
+    private float pointSizeThreshold = 1.0f;
+    private boolean inBetweenPress = false;
 
     private final ArrayList<Control> controls = new ArrayList<>();
     private final Control dpad;
@@ -53,7 +54,11 @@ public class VirtualKeypad {
     private final Control extraButtons;
     private final Control selectStart;
 
-    private final Emulator emulator = Emulator.getInstance();
+    // Paint reutilizável (melhor performance)
+    private final Paint paint = new Paint();
+
+    private static final int[] BUTTONS = { Emulator.GAMEPAD_B, Emulator.GAMEPAD_A };
+    private static final int[] EXTRA_BUTTONS = { Emulator.GAMEPAD_B_TURBO, Emulator.GAMEPAD_A_TURBO };
 
     public VirtualKeypad(View v, GameKeyListener l) {
         view = v;
@@ -62,8 +67,8 @@ public class VirtualKeypad {
 
         vibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
 
-        dpad = createControl(R.drawable.dpad);
-        buttons = createControl(R.drawable.buttons);
+        dpad        = createControl(R.drawable.dpad);
+        buttons     = createControl(R.drawable.buttons);
         extraButtons = createControl(R.drawable.extra_buttons);
         selectStart = createControl(R.drawable.select_start_buttons);
     }
@@ -77,23 +82,24 @@ public class VirtualKeypad {
     }
 
     public final void destroy() {
+        // nada a fazer aqui
     }
 
     public final void resize(int w, int h) {
-        // 存储变量，说是activity的各种状态都可以取出来
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        vibratorEnabled = prefs.getBoolean("enableVibrator", true);
-        dpad4Way = prefs.getBoolean("dpad4Way", false);
-        int value = prefs.getInt("dpadDeadZone", 2);
-        value = (value < 0 ? 0 : (Math.min(value, 4)));
-        dpadDeadZone = DPAD_DEADZONE_VALUES[value];
 
-        inBetweenPress = prefs.getBoolean("inBetweenPress", false);
+        vibratorEnabled   = prefs.getBoolean("enableVibrator", true);
+        dpad4Way          = prefs.getBoolean("dpad4Way", false);
+        inBetweenPress    = prefs.getBoolean("inBetweenPress", false);
+
+        int dz = prefs.getInt("dpadDeadZone", 2);
+        dz = Math.max(0, Math.min(dz, 4));
+        dpadDeadZone = DPAD_DEADZONE_VALUES[dz];
 
         pointSizeThreshold = 1.0f;
         if (prefs.getBoolean("pointSizePress", false)) {
-            int threshold = prefs.getInt("pointSizePressThreshold", 7);
-            pointSizeThreshold = (threshold / 10.0f) - 0.01f;
+            int thr = prefs.getInt("pointSizePressThreshold", 7);
+            pointSizeThreshold = (thr / 10.0f) - 0.01f;
         }
 
         dpad.hide(prefs.getBoolean("hideDpad", false));
@@ -102,39 +108,36 @@ public class VirtualKeypad {
         extraButtons.disable(prefs.getBoolean("disableExtraButtons", false));
         selectStart.hide(prefs.getBoolean("hideSelectStart", false));
 
-        scaleX = (float) w / view.getWidth();
-        scaleY = (float) h / view.getHeight();
-
         float controlScale = getControlScale(prefs);
-        float sx = scaleX * controlScale;
-        float sy = scaleY * controlScale;
-        Resources res = context.getResources();
-        for (Control c : controls)
-            c.load(res, sx, sy);
+        scaleX = (float) w / view.getWidth() * controlScale;
+        scaleY = (float) h / view.getHeight() * controlScale;
 
-        final int margin = prefs.getInt("layoutMargin", 2) * 10;
-        int marginX = (int) (margin * scaleX);
-        int marginY = (int) (margin * scaleY);
+        Resources res = context.getResources();
+        for (Control c : controls) {
+            c.load(res, scaleX, scaleY);
+        }
+
+        int margin = prefs.getInt("layoutMargin", 2) * 10;
+        int marginX = (int) (margin * (w / (float)view.getWidth()));
+        int marginY = (int) (margin * (h / (float)view.getHeight()));
+
         reposition(w - marginX, h - marginY, prefs);
 
         transparency = prefs.getInt("vkeypadTransparency", 50);
     }
 
     public void draw(Canvas canvas) {
-        Paint paint = new Paint();
         paint.setAlpha(transparency * 2 + 30);
-
-        for (Control c : controls)
+        for (Control c : controls) {
             c.draw(canvas, paint);
+        }
     }
 
-    private static float getControlScale(SharedPreferences prefs) {
-        String value = prefs.getString("vkeypadSize", null);
-        if ("small".equals(value))
-            return 1.0f;
-        if ("large".equals(value))
-            return 1.33333f;
-        return 1.2f;
+    private float getControlScale(SharedPreferences prefs) {
+        String s = prefs.getString("vkeypadSize", "medium");
+        if ("large".equals(s))  return 1.33333f;
+        if ("small".equals(s))  return 1.0f;
+        return 1.2f; // medium
     }
 
     private Control createControl(int resId) {
@@ -143,99 +146,58 @@ public class VirtualKeypad {
         return c;
     }
 
-    private void makeBottomBottom(int w, int h) {
-        if (dpad.getWidth() + buttons.getWidth() > w) {
-            makeBottomTop(w, h);
-            return;
-        }
-
-        dpad.move(0, h - dpad.getHeight());
-        buttons.move(w - buttons.getWidth(), h - buttons.getHeight());
-        if (extraButtons.isEnabled()) {
-            extraButtons.move(w - buttons.getWidth(),
-                    h - buttons.getHeight() * 7 / 3);
-        }
-
-        int x = (w + dpad.getWidth() - buttons.getWidth() -
-                selectStart.getWidth()) / 2;
-        if (x > dpad.getWidth())
-            selectStart.move(x, h - selectStart.getHeight());
-        else {
-            x = (w - selectStart.getWidth()) / 2;
-            selectStart.move(x, 0);
+    private void reposition(int w, int h, SharedPreferences prefs) {
+        String layout = prefs.getString("vkeypadLayout", "top_bottom");
+        switch (layout) {
+            case "top_bottom":      makeTopBottom(w, h); break;
+            case "bottom_top":      makeBottomTop(w, h); break;
+            case "top_top":         makeTopTop(w, h);    break;
+            default:                makeBottomBottom(w, h); break;
         }
     }
 
+    private void makeBottomBottom(int w, int h) {
+        dpad.move(0, h - dpad.getHeight());
+        buttons.move(w - buttons.getWidth(), h - buttons.getHeight());
+        if (extraButtons.isEnabled())
+            extraButtons.move(w - buttons.getWidth(), h - buttons.getHeight() * 7 / 3);
+        int x = (w - selectStart.getWidth()) / 2;
+        selectStart.move(x, h - selectStart.getHeight());
+    }
+
+    }
+
     private void makeTopTop(int w, int h) {
-        if (dpad.getWidth() + buttons.getWidth() > w) {
-            makeBottomTop(w, h);
-            return;
-        }
-
         dpad.move(0, 0);
-
-        int y = 0;
-        if (extraButtons.isEnabled()) {
-            extraButtons.move(w - extraButtons.getWidth(), y);
-            y += buttons.getHeight() * 4 / 3;
-        }
+        int y = extraButtons.isEnabled() ? buttons.getHeight() * 4 / 3 : 0;
         buttons.move(w - buttons.getWidth(), y);
-
-        selectStart.move((w - selectStart.getWidth()) / 2,
-                h - selectStart.getHeight());
+        if (extraButtons.isEnabled()) extraButtons.move(w - extraButtons.getWidth(), 0);
+        selectStart.move((w - selectStart.getWidth()) / 2, h - selectStart.getHeight());
     }
 
     private void makeTopBottom(int w, int h) {
         dpad.move(0, h - dpad.getHeight());
         buttons.move(w - buttons.getWidth(), h - buttons.getHeight());
-        if (extraButtons.isEnabled()) {
+        if (extraButtons.isEnabled())
             extraButtons.move(w - buttons.getWidth(), h - buttons.getHeight() * 7 / 3);
-        }
-//        int x = (w - buttons.getWidth() - selectStart.getWidth()) / 2;
-        int x = w / 2 - selectStart.getWidth() / 2;
-        selectStart.move(x, h - selectStart.getHeight());
+        selectStart.move(w / 2 - selectStart.getWidth() / 2, h - selectStart.getHeight());
     }
 
     private void makeBottomTop(int w, int h) {
         dpad.move(0, h - dpad.getHeight());
-
-        int y = 0;
-        if (extraButtons.isEnabled()) {
-            extraButtons.move(w - extraButtons.getWidth(), y);
-            y += buttons.getHeight() * 4 / 3;
-        }
+        int y = extraButtons.isEnabled() ? buttons.getHeight() * 4 / 3 : 0;
         buttons.move(w - buttons.getWidth(), y);
-
+        if (extraButtons.isEnabled()) extraButtons.move(w - extraButtons.getWidth(), 0);
         int x = (w + dpad.getWidth() - selectStart.getWidth()) / 2;
         selectStart.move(x, h - selectStart.getHeight());
     }
 
-    private void reposition(int w, int h, SharedPreferences prefs) {
-        String layout = prefs.getString("vkeypadLayout", "top_bottom");
-
-        switch (layout) {
-            case "top_bottom":
-                makeTopBottom(w, h);
-                break;
-            case "bottom_top":
-                makeBottomTop(w, h);
-                break;
-            case "top_top":
-                makeTopTop(w, h);
-                break;
-            default:
-                makeBottomBottom(w, h);
-                break;
-        }
-    }
-
     private boolean shouldVibrate(int oldStates, int newStates) {
-        return (((oldStates ^ newStates) & newStates) != 0);
+        return ((oldStates ^ newStates) & newStates) != 0;
     }
 
     private void setKeyStates(int newStates) {
-        if (keyStates == newStates)
-            return;
+        if (keyStates == newStates) return;
 
         if (vibratorEnabled && shouldVibrate(keyStates, newStates))
             vibrator.vibrate(33);
@@ -245,177 +207,116 @@ public class VirtualKeypad {
     }
 
     private int get4WayDirection(float x, float y) {
-        x -= 0.5f;
-        y -= 0.5f;
-
-        if (Math.abs(x) >= Math.abs(y))
-            return (x < 0.0f ? 0 : 2);
-        return (y < 0.0f ? 1 : 3);
+        x -= 0.5f; y -= 0.5f;
+        return Math.abs(x) >= Math.abs(y)
+                ? (x < 0 ? 0 : 2)
+                : (y < 0 ? 1 : 3);
     }
 
     private int getDpadStates(float x, float y) {
-        if (dpad4Way)
-            return DPAD_4WAY[get4WayDirection(x, y)];
+        if (dpad4Way) return DPAD_4WAY[get4WayDirection(x, y)];
 
-        final float cx = 0.5f;
-        final float cy = 0.5f;
-        int states = 0;
-
-        if (x < cx - dpadDeadZone)
-            states |= Emulator.GAMEPAD_LEFT;
-        else if (x > cx + dpadDeadZone)
-            states |= Emulator.GAMEPAD_RIGHT;
-        if (y < cy - dpadDeadZone)
-            states |= Emulator.GAMEPAD_UP;
-        else if (y > cy + dpadDeadZone)
-            states |= Emulator.GAMEPAD_DOWN;
-
-        return states;
+        float cx = 0.5f, cy = 0.5f;
+        int s = 0;
+        if (x < cx - dpadDeadZone) s |= Emulator.GAMEPAD_LEFT;
+        else if (x > cx + dpadDeadZone) s |= Emulator.GAMEPAD_RIGHT;
+        if (y < cy - dpadDeadZone) s |= Emulator.GAMEPAD_UP;
+        else if (y > cy + dpadDeadZone) s |= Emulator.GAMEPAD_DOWN;
+        return s;
     }
 
-    private int getButtonsStates(int[] buttons, float x, float y, float size) {
-
-        if (size > pointSizeThreshold)
-            return (buttons[0] | buttons[1]);
-
+    private int getButtonsStates(int[] btns, float x, float y, float size) {
+        if (size > pointSizeThreshold) return btns[0] | btns[1];
         if (inBetweenPress) {
-            int states = 0;
-            if (x < 0.58f)
-                states |= buttons[0];
-            if (x > 0.42f)
-                states |= buttons[1];
-            return states;
+            int s = 0;
+            if (x < 0.58f) s |= btns[0];
+            if (x > 0.42f) s |= btns[1];
+            return s;
         }
-        return (x < 0.5f ? buttons[0] : buttons[1]);
+        return x < 0.5f ? btns[0] : btns[1];
     }
 
     private int getSelectStartStates(float x, float y) {
-        return (x < 0.5f ? Emulator.GAMEPAD_SELECT : Emulator.GAMEPAD_START);
+        return x < 0.5f ? Emulator.GAMEPAD_SELECT : Emulator.GAMEPAD_START;
     }
 
-    private float getEventX(MotionEvent event, int index, boolean flip) {
-        float x = Wrapper.MotionEvent_getX(event, index);
-        if (flip)
-            x = view.getWidth() - x;
-        return (x * scaleX);
+    private float getEventX(MotionEvent ev, int idx, boolean flip) {
+        float x = Wrapper.MotionEvent_getX(ev, idx);
+        if (flip) x = view.getWidth() - x;
+        return x * scaleX;
     }
 
-    private float getEventY(MotionEvent event, int index, boolean flip) {
-        float y = Wrapper.MotionEvent_getY(event, index);
-        if (flip)
-            y = view.getHeight() - y;
+    private float getEventY(MotionEvent ev, int idx, boolean flip) {
+        float y = Wrapper.MotionEvent_getY(ev, idx);
+        if (flip) y = view.getHeight() - y;
         return y * scaleY;
     }
 
     private Control findControl(float x, float y) {
         for (Control c : controls) {
-            if (c.hitTest(x, y))
-                return c;
+            if (c.hitTest(x, y)) return c;
         }
         return null;
     }
-
-    private static final int[] BUTTONS = {
-            Emulator.GAMEPAD_B, Emulator.GAMEPAD_A
-    };
-
-    private static final int[] EXTRA_BUTTONS = {
-            Emulator.GAMEPAD_B_TURBO, Emulator.GAMEPAD_A_TURBO
-    };
 
     private int getControlStates(Control c, float x, float y, float size) {
         x = (x - c.getX()) / c.getWidth();
         y = (y - c.getY()) / c.getHeight();
 
-        if (c == dpad)
-            return getDpadStates(x, y);
-        if (c == buttons)
-            return getButtonsStates(BUTTONS, x, y, size);
-        if (c == extraButtons)
-            return getButtonsStates(EXTRA_BUTTONS, x, y, size);
-        if (c == selectStart)
-            return getSelectStartStates(x, y);
-
+        if (c == dpad)        return getDpadStates(x, y);
+        if (c == buttons)      return getButtonsStates(BUTTONS, x, y, size);
+        if (c == extraButtons)return getButtonsStates(EXTRA_BUTTONS, x, y, size);
+        if (c == selectStart) return getSelectStartStates(x, y);
         return 0;
     }
 
+    /** VERSÃO CORRIGIDA - MULTI-TOUCH PERFEITO **/
     public boolean onTouch(MotionEvent event, boolean flip) {
-        int action = event.getAction();
-        int id;
-        int pointerUpId = -1;
+        int action = event.getActionMasked();
+        int pointerCount = Wrapper.MotionEvent_getPointerCount(event);
 
-        switch (action & MotionEvent.ACTION_MASK) {
-            case MotionEvent.ACTION_UP:
-            case MotionEvent.ACTION_CANCEL:
-                setKeyStates(0);
-                return true;
-
-            case MotionEvent.ACTION_DOWN:
-            case MotionEvent.ACTION_POINTER_DOWN:
-            case MotionEvent.ACTION_MOVE:
-            case MotionEvent.ACTION_OUTSIDE:
-                break;
-            default:
-                return false;
+        // Só zera tudo quando o último dedo sair da tela
+        if ((action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) && pointerCount <= 1) {
+            setKeyStates(0);
+            return true;
         }
 
+        // Se ainda tem pelo menos um dedo na tela → recalcula estado
         int states = 0;
-        int n = Wrapper.MotionEvent_getPointerCount(event);
-        for (int i = 0; i < n; i++) {
+        for (int i = 0; i < pointerCount; i++) {
             float x = getEventX(event, i, flip);
             float y = getEventY(event, i, flip);
+
             Control c = findControl(x, y);
-            if (c != null) {
-                states |= getControlStates(c, x, y,
-                        Wrapper.MotionEvent_getSize(event, i));
+            if (c != null && c.isEnabled() && !c.hidden) {
+                float size = Wrapper.MotionEvent_getSize(event, i);
+                states |= getControlStates(c, x, y, size);
             }
         }
+
         setKeyStates(states);
         return true;
     }
 
     private static class Control {
         private final int resId;
-        private boolean hidden;
-        private boolean disabled;
+        private boolean hidden = false;
+        private boolean disabled = false;
         private Bitmap bitmap;
         private final RectF bounds = new RectF();
 
-        Control(int r) {
-            resId = r;
-        }
+        Control(int r) { resId = r; }
 
-        final float getX() {
-            return bounds.left;
-        }
+        final float getX() { return bounds.left; }
+        final float getY() { return bounds.top; }
+        final int getWidth()  { return bitmap.getWidth(); }
+        final int getHeight() { return bitmap.getHeight(); }
+        final boolean isEnabled() { return !disabled; }
 
-        final float getY() {
-            return bounds.top;
-        }
+        final void hide(boolean b)    { hidden = b; }
+        final void disable(boolean b) { disabled = b; }
 
-        final int getWidth() {
-            return bitmap.getWidth();
-        }
-
-        final int getHeight() {
-            return bitmap.getHeight();
-        }
-
-        final boolean isEnabled() {
-            return !disabled;
-        }
-
-        final void hide(boolean b) {
-            hidden = b;
-        }
-
-        final void disable(boolean b) {
-            disabled = b;
-        }
-
-        final boolean hitTest(float x, float y) {
-            return bounds.contains(x, y);
-        }
+        final boolean hitTest(float x, float y) { return bounds.contains(x, y); }
 
         final void move(float x, float y) {
             bounds.set(x, y, x + bitmap.getWidth(), y + bitmap.getHeight());
@@ -424,19 +325,13 @@ public class VirtualKeypad {
         final void load(Resources res, float sx, float sy) {
             bitmap = ((BitmapDrawable) res.getDrawable(resId)).getBitmap();
             bitmap = Bitmap.createScaledBitmap(bitmap,
-                    (int) (sx * bitmap.getWidth()),
-                    (int) (sy * bitmap.getHeight()), true);
-        }
-
-        final void reload(Resources res, int id) {
-            int w = bitmap.getWidth();
-            int h = bitmap.getHeight();
-            bitmap = ((BitmapDrawable) res.getDrawable(id)).getBitmap();
-            bitmap = Bitmap.createScaledBitmap(bitmap, w, h, true);
+                    (int)(bitmap.getWidth()  * sx),
+                    (int)(bitmap.getHeight() * sy), true);
         }
 
         final void draw(Canvas canvas, Paint paint) {
-            if (!hidden && !disabled) canvas.drawBitmap(bitmap, bounds.left, bounds.top, paint);
+            if (!hidden && !disabled)
+                canvas.drawBitmap(bitmap, bounds.left, bounds.top, paint);
         }
     }
 }
