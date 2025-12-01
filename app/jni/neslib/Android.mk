@@ -3,10 +3,8 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE_TAGS := user
 
-# This is the target being built.
 LOCAL_MODULE := libnes
 
-# All of the source files that we will compile.
 LOCAL_SRC_FILES := \
 	fce.c \
 	video.c \
@@ -182,7 +180,6 @@ LOCAL_SRC_FILES := \
 	zlib/unzip.c \
 	zlib/ioapi.c
 
-# Configure CPU core based on architecture
 ifeq ($(TARGET_ARCH),arm)
     LOCAL_CFLAGS += -DASM_6502
     LOCAL_SRC_FILES += \
@@ -190,8 +187,8 @@ ifeq ($(TARGET_ARCH),arm)
         giz_blit.s \
         giz_blit_rev.s
 else
-    # Use C implementation for non-ARM32 architectures (arm64, x86, etc.)
-    LOCAL_SRC_FILES += x6502.c drivers/android/blit_generic.c
+    LOCAL_SRC_FILES += x6502.c \
+                       drivers/android/blit_generic.c
 endif
 
 LOCAL_SRC_FILES += \
@@ -200,15 +197,13 @@ LOCAL_SRC_FILES += \
 	drivers/android/netplay.c \
 	drivers/android/nesengine.cpp
 
-# Also need the JNI headers.
-LOCAL_C_INCLUDES += \
-	$(LOCAL_PATH)/../common \
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/../common
 
 LOCAL_LDLIBS := -lz -llog
 
 LOCAL_DISABLE_FATAL_LINKER_WARNINGS = true
 
-# Special compiler flags.
+# Added -fcommon to fix duplicate symbol errors (e.g. MMC5SPRVPage)
 LOCAL_CFLAGS += -O3 -fvisibility=hidden -fcommon
 
 LOCAL_CFLAGS += \
@@ -218,7 +213,6 @@ LOCAL_CFLAGS += \
 	-DFRAMESKIP=1 \
 	-DZLIB
 
-# Don't prelink this library.
 LOCAL_PRELINK_MODULE := false
 
 include $(BUILD_SHARED_LIBRARY)
