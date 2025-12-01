@@ -1,7 +1,10 @@
 LOCAL_PATH := $(call my-dir)
 
-# Include common module
-include $(LOCAL_PATH)/common/Android.mk
+# Save the local path because including other makefiles overwrites LOCAL_PATH
+ROOT_PATH := $(LOCAL_PATH)
 
-# Include NES library module  
-include $(LOCAL_PATH)/neslib/Android.mk
+# Include common module
+include $(ROOT_PATH)/common/Android.mk
+
+# Include NES library module
+include $(ROOT_PATH)/neslib/Android.mk
