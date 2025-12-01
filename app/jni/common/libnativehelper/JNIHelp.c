@@ -161,9 +161,7 @@ int jniThrowIOException(JNIEnv* env, int errnum)
 
 const char* jniStrError(int errnum, char* buf, size_t buflen)
 {
-    // Android usa a versão POSIX de strerror_r, que retorna int (0 em caso de sucesso).
-    // O código original assumia incorretamente a semântica GNU (retornando char*)
-    // ou tentava detectar via cast, o que falha em 64-bits.
+    // Android uses the POSIX strerror_r which returns int (0 on success).
     int ret = strerror_r(errnum, buf, buflen);
     if (ret == 0) {
         return buf;
