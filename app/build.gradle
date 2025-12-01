@@ -2,29 +2,33 @@ plugins {
     id 'com.android.application'
 }
 
+
 android {
     namespace 'com.androidemu.nes'
-    compileSdk 21
-    ndkVersion "21.4.7075529"
+    compileSdk 34
+    ndkVersion "26.1.10909125"
+
 
     defaultConfig {
         applicationId "com.androidemu.nes"
         minSdk 16
-        //noinspection ExpiredTargetSdkVersion
-        targetSdk 21
+        targetSdk 34
         versionCode 61
         versionName "2.5"
 
+
         externalNativeBuild {
             ndkBuild {
-                abiFilters 'armeabi-v7a'
+                abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
             }
         }
 
+
         ndk {
-            abiFilters "armeabi-v7a"
+            abiFilters "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
         }
     }
+
 
     buildTypes {
         release {
@@ -33,10 +37,12 @@ android {
         }
     }
 
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+
 
     externalNativeBuild {
         ndkBuild {
@@ -45,6 +51,8 @@ android {
     }
 }
 
+
 dependencies {
-    implementation 'com.android.support:appcompat-v7:21.0.3'
+    // Substituindo a dependência antiga do Support Library
+    implementation 'androidx.appcompat:appcompat:1.6.1'
 }
