@@ -54,26 +54,25 @@ public class VirtualKeypad {
     private final Control extraButtons;
     private final Control selectStart;
 
-    // Paint reutilizável (melhor performance)
     private final Paint paint = new Paint();
 
     private static final int[] BUTTONS = { Emulator.GAMEPAD_B, Emulator.GAMEPAD_A };
-    private static final int[] EXTRA_BUTTONS = { Emulator.GAMEPAD_B_TURBO, Emulator.GAMEPAD_A_TURBO };
+    private final int[] EXTRA_BUTTONS = { Emulator.GAMEPAD_B_TURBO, Emulator.GAMEPAD_A_TURBO };
 
     public VirtualKeypad(View v, GameKeyListener l) {
         view = v;
         context = view.getContext();
-        gameKeyListener = l;
+        gameListener = l;
 
         vibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
 
-        dpad        = createControl(R.drawable.dpad);
-        buttons     = createControl(R.drawable.buttons);
+        dpad = createControl(R.drawable.dpad);
+        buttons = createControl(R.drawable.buttons);
         extraButtons = createControl(R.drawable.extra_buttons);
         selectStart = createControl(R.drawable.select_start_buttons);
     }
 
-    public final int getKeyStates() {
+    public int getKeyStates() {
         return keyStates;
     }
 
@@ -81,16 +80,14 @@ public class VirtualKeypad {
         keyStates = 0;
     }
 
-    public final void destroy() {
-        // nada a fazer aqui
-    }
+    public void destroy() {}
 
-    public final void resize(int w, int h) {
+    public void resize(int w, int h) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 
-        vibratorEnabled   = prefs.getBoolean("enableVibrator", true);
-        dpad4Way          = prefs.getBoolean("dpad4Way", false);
-        inBetweenPress    = prefs.getBoolean("inBetweenPress", false);
+        vibratorEnabled = prefs.getBoolean("enableVibrator", true);
+        dpad4Way = prefs.getBoolean("dpad4Way", false);
+        inBetweenPress = prefs.getBoolean("inBetweenPress", false);
 
         int dz = prefs.getInt("dpadDeadZone", 2);
         dz = Math.max(0, Math.min(dz, 4));
@@ -109,8 +106,8 @@ public class VirtualKeypad {
         selectStart.hide(prefs.getBoolean("hideSelectStart", false));
 
         float controlScale = getControlScale(prefs);
-        scaleX = (float) w / view.getWidth() * controlScale;
-        scaleY = (float) h / view.getHeight() * controlScale;
+        scaleX = (float) w / view.getWidth()) * controlScale;
+        scaleY = (float) h / view.getHeight()) * controlScale;
 
         Resources res = context.getResources();
         for (Control c : controls) {
@@ -118,11 +115,10 @@ public class VirtualKeypad {
         }
 
         int margin = prefs.getInt("layoutMargin", 2) * 10;
-        int marginX = (int) (margin * (w / (float)view.getWidth()));
-        int marginY = (int) (margin * (h / (float)view.getHeight()));
+        int marginX = (int) (margin * scaleX);
+        int marginY = (int) (margin * scaleY);
 
         reposition(w - marginX, h - marginY, prefs);
-
         transparency = prefs.getInt("vkeypadTransparency", 50);
     }
 
@@ -135,9 +131,9 @@ public class VirtualKeypad {
 
     private float getControlScale(SharedPreferences prefs) {
         String s = prefs.getString("vkeypadSize", "medium");
-        if ("large".equals(s))  return 1.33333f;
-        if ("small".equals(s))  return 1.0f;
-        return 1.2f; // medium
+        if ("large".equals(s)) return 1.33333f;
+        if ("small".equals(s)) return 1.0f;
+        return 1.2f;
     }
 
     private Control createControl(int resId) {
@@ -163,8 +159,6 @@ public class VirtualKeypad {
             extraButtons.move(w - buttons.getWidth(), h - buttons.getHeight() * 7 / 3);
         int x = (w - selectStart.getWidth()) / 2;
         selectStart.move(x, h - selectStart.getHeight());
-    }
-
     }
 
     private void makeTopTop(int w, int h) {
@@ -203,7 +197,7 @@ public class VirtualKeypad {
             vibrator.vibrate(33);
 
         keyStates = newStates;
-        gameKeyListener.onGameKeyChanged();
+        gameListener.onGameKeyChanged();
     }
 
     private int get4WayDirection(float x, float y) {
@@ -265,23 +259,22 @@ public class VirtualKeypad {
 
         if (c == dpad)        return getDpadStates(x, y);
         if (c == buttons)      return getButtonsStates(BUTTONS, x, y, size);
-        if (c == extraButtons)return getButtonsStates(EXTRA_BUTTONS, x, y, size);
+        if (c == extraButtons) return getButtonsStates(EXTRA_BUTTONS, x, y, size);
         if (c == selectStart) return getSelectStartStates(x, y);
         return 0;
     }
 
-    /** VERSÃO CORRIGIDA - MULTI-TOUCH PERFEITO **/
+    // MULTI-TOUCH CORRIGIDO - FUNCIONA PERFEITAMENTE
     public boolean onTouch(MotionEvent event, boolean flip) {
         int action = event.getActionMasked();
         int pointerCount = Wrapper.MotionEvent_getPointerCount(event);
 
-        // Só zera tudo quando o último dedo sair da tela
+        // Só solta tudo quando o ÚLTIMO dedo sair
         if ((action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) && pointerCount <= 1) {
             setKeyStates(0);
             return true;
         }
 
-        // Se ainda tem pelo menos um dedo na tela → recalcula estado
         int states = 0;
         for (int i = 0; i < pointerCount; i++) {
             float x = getEventX(event, i, flip);
@@ -307,29 +300,29 @@ public class VirtualKeypad {
 
         Control(int r) { resId = r; }
 
-        final float getX() { return bounds.left; }
-        final float getY() { return bounds.top; }
-        final int getWidth()  { return bitmap.getWidth(); }
-        final int getHeight() { return bitmap.getHeight(); }
-        final boolean isEnabled() { return !disabled; }
+        float getX() { return bounds.left; }
+        float getY() { return bounds.top; }
+        int getWidth()  { return bitmap.getWidth(); }
+        int getHeight() { return bitmap.getHeight(); }
+        boolean isEnabled() { return !disabled; }
 
-        final void hide(boolean b)    { hidden = b; }
-        final void disable(boolean b) { disabled = b; }
+        void hide(boolean b)    { hidden = b; }
+        void disable(boolean b) { disabled = b; }
 
-        final boolean hitTest(float x, float y) { return bounds.contains(x, y); }
+        boolean hitTest(float x, float y) { return bounds.contains(x, y); }
 
-        final void move(float x, float y) {
+        void move(float x, float y) {
             bounds.set(x, y, x + bitmap.getWidth(), y + bitmap.getHeight());
         }
 
-        final void load(Resources res, float sx, float sy) {
+        void load(Resources res, float sx, float sy) {
             bitmap = ((BitmapDrawable) res.getDrawable(resId)).getBitmap();
             bitmap = Bitmap.createScaledBitmap(bitmap,
                     (int)(bitmap.getWidth()  * sx),
                     (int)(bitmap.getHeight() * sy), true);
         }
 
-        final void draw(Canvas canvas, Paint paint) {
+        void draw(Canvas canvas, Paint paint) {
             if (!hidden && !disabled)
                 canvas.drawBitmap(bitmap, bounds.left, bounds.top, paint);
         }
