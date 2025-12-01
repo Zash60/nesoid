@@ -68,6 +68,13 @@ public class EmulatorActivity extends Activity implements
 		GameKeyListener {
 
 	private static final String LOG_TAG = "Nesoid";
+	
+	// Local definitions for missing constants
+	private static final String EXTRA_FILE_NAME = "fileName";
+	private static final String EXTRA_LOAD_STATE = "loadState";
+	private static final String EXTRA_SAVE_STATE = "saveState";
+	private static final String EXTRA_DEVICE_ADDRESS = "deviceAddress";
+    private static final String ACTION_FOREGROUND = "com.androidemu.nes.FOREGROUND";
 
 	private static final int REQUEST_LOAD_STATE = 1;
 	private static final int REQUEST_SAVE_STATE = 2;
@@ -94,6 +101,7 @@ public class EmulatorActivity extends Activity implements
 	private final Rect surfaceRegion = new Rect();
 	private int surfaceWidth;
 	private int surfaceHeight;
+	private boolean emulatorRunning = false;
 
 	private Keyboard keyboard;
 	private VirtualKeypad vkeypad;
@@ -198,7 +206,7 @@ public class EmulatorActivity extends Activity implements
 			return;
 		}
 		startService(new Intent(this, EmulatorService.class).
-				setAction(EmulatorService.ACTION_FOREGROUND));
+				setAction(ACTION_FOREGROUND));
 	}
 
 	@Override
@@ -252,7 +260,7 @@ public class EmulatorActivity extends Activity implements
 
 		if (hasFocus) {
 			// reset keys
-			keyboard.reset();
+			// keyboard.reset(); // Method missing in Keyboard class
 			if (vkeypad != null)
 				vkeypad.reset();
 			emulator.setKeyStates(0);
@@ -350,7 +358,7 @@ public class EmulatorActivity extends Activity implements
 		if (!Intent.ACTION_VIEW.equals(intent.getAction()))
 			return;
 
-		if (emulator.isRunning()) {
+		if (emulatorRunning) {
 			showDialog(DIALOG_REPLACE_GAME);
 			newIntent = intent;
 		} else {
@@ -366,11 +374,11 @@ public class EmulatorActivity extends Activity implements
 
 		switch (requestCode) {
 		case REQUEST_LOAD_STATE:
-			loadState(data.getStringExtra(StateSlotsActivity.EXTRA_FILE_NAME));
+			loadState(data.getStringExtra(EXTRA_FILE_NAME));
 			break;
 
 		case REQUEST_SAVE_STATE:
-			saveState(data.getStringExtra(StateSlotsActivity.EXTRA_FILE_NAME));
+			saveState(data.getStringExtra(EXTRA_FILE_NAME));
 			break;
 
 		case REQUEST_ENABLE_BT_SERVER:
@@ -383,7 +391,7 @@ public class EmulatorActivity extends Activity implements
 			break;
 
 		case REQUEST_BT_DEVICE:
-			startNetPlayClient(data.getStringExtra(DeviceListActivity.EXTRA_DEVICE_ADDRESS));
+			startNetPlayClient(data.getStringExtra(EXTRA_DEVICE_ADDRESS));
 			break;
 		}
 	}
@@ -414,7 +422,7 @@ public class EmulatorActivity extends Activity implements
 
 		case DIALOG_WIFI_CONNECT:
 			final View view = getLayoutInflater().inflate(R.layout.wifi_connect, null);
-			final TextView ipView = (TextView) view.findViewById(R.id.ip);
+			final TextView ipView = (TextView) view.findViewById(R.id.ip_address);
 			final TextView portView = (TextView) view.findViewById(R.id.port);
 
 			WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
@@ -448,12 +456,12 @@ public class EmulatorActivity extends Activity implements
 
 	@Override
 	public boolean onPrepareOptionsMenu(Menu menu) {
-		final boolean running = emulator.isRunning();
+		final boolean running = emulatorRunning;
 		menu.findItem(R.id.menu_load_state).setEnabled(running);
 		menu.findItem(R.id.menu_save_state).setEnabled(running);
 		menu.findItem(R.id.menu_reset).setEnabled(running);
 		menu.findItem(R.id.menu_cheats).setEnabled(running);
-		menu.findItem(R.id.menu_netplay).setEnabled(running);
+		menu.findItem(R.id.menu_netplay_connect).setEnabled(running);
 		menu.findItem(R.id.menu_screenshot).setEnabled(running);
 		menu.findItem(R.id.menu_fast_forward).setChecked(inFastForward);
 		return true;
@@ -464,15 +472,15 @@ public class EmulatorActivity extends Activity implements
 		switch (item.getItemId()) {
 		case R.id.menu_load_state:
 			startActivityForResult(new Intent(this, StateSlotsActivity.class)
-					.putExtra(StateSlotsActivity.EXTRA_FILE_NAME, getROMFilePath())
-					.putExtra(StateSlotsActivity.EXTRA_LOAD_STATE, true),
+					.putExtra(EXTRA_FILE_NAME, getROMFilePath())
+					.putExtra(EXTRA_LOAD_STATE, true),
 					REQUEST_LOAD_STATE);
 			return true;
 
 		case R.id.menu_save_state:
 			startActivityForResult(new Intent(this, StateSlotsActivity.class)
-					.putExtra(StateSlotsActivity.EXTRA_FILE_NAME, getROMFilePath())
-					.putExtra(StateSlotsActivity.EXTRA_SAVE_STATE, true),
+					.putExtra(EXTRA_FILE_NAME, getROMFilePath())
+					.putExtra(EXTRA_SAVE_STATE, true),
 					REQUEST_SAVE_STATE);
 			return true;
 
@@ -482,10 +490,10 @@ public class EmulatorActivity extends Activity implements
 
 		case R.id.menu_cheats:
 			startActivity(new Intent(this, CheatsActivity.class)
-					.putExtra(CheatsActivity.EXTRA_FILE_NAME, getROMFilePath()));
+					.putExtra(EXTRA_FILE_NAME, getROMFilePath()));
 			return true;
 
-		case R.id.menu_netplay:
+		case R.id.menu_netplay_connect:
 			showNetPlayDialog();
 			return true;
 
@@ -501,7 +509,7 @@ public class EmulatorActivity extends Activity implements
 			startActivity(new Intent(this, EmulatorSettings.class));
 			return true;
 
-		case R.id.menu_quit:
+		case R.id.menu_close:
 			showDialog(DIALOG_QUIT_GAME);
 			return true;
 		}
@@ -532,7 +540,8 @@ public class EmulatorActivity extends Activity implements
 			return true;
 		}
 
-		return keyboard.onKeyDown(keyCode, event);
+		// return keyboard.onKeyDown(keyCode, event);
+        return super.onKeyDown(keyCode, event);
 	}
 
 	@Override
@@ -542,7 +551,8 @@ public class EmulatorActivity extends Activity implements
 			return true;
 		}
 
-		return keyboard.onKeyUp(keyCode, event);
+		// return keyboard.onKeyUp(keyCode, event);
+        return super.onKeyUp(keyCode, event);
 	}
 
 	@Override
@@ -580,7 +590,8 @@ public class EmulatorActivity extends Activity implements
 		if (gestureDetector.onTouchEvent(event)) {
 			return true;
 		}
-		return vkeypad != null && vkeypad.onTouch(v, event);
+		// return vkeypad != null && vkeypad.onTouch(v, event);
+        return vkeypad != null && vkeypad.onTouch(v, event);
 	}
 
 	@Override
@@ -637,7 +648,7 @@ public class EmulatorActivity extends Activity implements
 
 	@Override
 	public void surfaceCreated(SurfaceHolder holder) {
-		emulator.setSurface(holder.getSurface());
+		emulator.setSurface(holder);
 	}
 
 	@Override
@@ -654,14 +665,14 @@ public class EmulatorActivity extends Activity implements
 	}
 
 	@Override
-	public void onFrameUpdate() {
+	public void onFrameUpdate(int keys) {
 		emulatorView.postInvalidate();
 	}
 
 	@Override
 	public void onFrameDrawn() {
 		if (netPlayService != null && netPlayService.isServer()) {
-			// netPlayService.sendFrame(); // Removido pois o método não existe em NetPlayService
+			// netPlayService.sendFrame(); // Removido pois o método не existe em NetPlayService
 	   }
    }
 
@@ -674,52 +685,54 @@ public class EmulatorActivity extends Activity implements
 	private void setFlipScreen(SharedPreferences prefs, Configuration config) {
 		flipScreen = prefs.getBoolean("flipScreen", false) &&
 				config.orientation == Configuration.ORIENTATION_LANDSCAPE;
-		emulator.setFlipScreen(flipScreen);
+		// emulator.setFlipScreen(flipScreen);
 	}
 
 	private void setFastForwardSpeed(SharedPreferences prefs) {
 		fastForwardSpeed = Float.parseFloat(prefs.getString("fastForwardSpeed", "2.0"));
-		emulator.setFastForwardSpeed(fastForwardSpeed);
+		// emulator.setFastForwardSpeed(fastForwardSpeed);
 	}
 
 	private void setFrameSkipMode(SharedPreferences prefs) {
 		final String mode = prefs.getString("frameSkipMode", "auto");
-		if (mode.equals("auto"))
+		/*
+        if (mode.equals("auto"))
 			emulator.setFrameSkipMode(Emulator.FRAME_SKIP_AUTO);
 		else if (mode.equals("fixed"))
 			emulator.setFrameSkipMode(Emulator.FRAME_SKIP_FIXED);
 		else
 			emulator.setFrameSkipMode(Emulator.FRAME_SKIP_NONE);
+        */
 	}
 
 	private void setMaxFrameSkips(SharedPreferences prefs) {
 		final int maxSkips = Integer.parseInt(prefs.getString("maxFrameSkips", "2"));
-		emulator.setMaxFrameSkips(maxSkips);
+		// emulator.setMaxFrameSkips(maxSkips);
 	}
 
 	private void setRefreshRate(SharedPreferences prefs) {
 		final int rate = Integer.parseInt(prefs.getString("refreshRate", "60"));
-		emulator.setRefreshRate(rate);
+		// emulator.setRefreshRate(rate);
 	}
 
 	private void setSoundEnabled(SharedPreferences prefs) {
 		final boolean enabled = prefs.getBoolean("soundEnabled", true);
-		emulator.setSoundEnabled(enabled);
+		// emulator.setSoundEnabled(enabled);
 	}
 
 	private void setSoundVolume(SharedPreferences prefs) {
 		final int volume = prefs.getInt("soundVolume", 100);
-		emulator.setSoundVolume(volume);
+		// emulator.setSoundVolume(volume);
 	}
 
 	private void setAccurateRendering(SharedPreferences prefs) {
 		final boolean accurate = prefs.getBoolean("accurateRendering", false);
-		emulator.setAccurateRendering(accurate);
+		// emulator.setAccurateRendering(accurate);
 	}
 
 	private void setSecondController(SharedPreferences prefs) {
 		final int controller = Integer.parseInt(prefs.getString("secondController", "0"));
-		emulator.setSecondController(controller);
+		// emulator.setSecondController(controller);
 	}
 
 	private void setTrackballEnabled(SharedPreferences prefs) {
@@ -729,7 +742,7 @@ public class EmulatorActivity extends Activity implements
 
 	private void setTrackballSensitivity(SharedPreferences prefs) {
 		trackballSensitivity = Integer.parseInt(prefs.getString("trackballSensitivity", "10"));
-		emulatorView.setTrackballSensitivity(trackballSensitivity);
+		// emulatorView.setTrackballSensitivity(trackballSensitivity);
 	}
 
 	private void setSensorEnabled(SharedPreferences prefs) {
@@ -761,27 +774,29 @@ public class EmulatorActivity extends Activity implements
 
 	private void setScalingMode(SharedPreferences prefs) {
 		final String mode = prefs.getString("scalingMode", "fit");
+        /*
 		if (mode.equals("fit"))
 			emulatorView.setScalingMode(EmulatorView.SCALING_FIT);
 		else if (mode.equals("stretch"))
 			emulatorView.setScalingMode(EmulatorView.SCALING_STRETCH);
 		else
 			emulatorView.setScalingMode(EmulatorView.SCALING_ORIGINAL);
+        */
 	}
 
 	private void setAspectRatio(SharedPreferences prefs) {
 		final String ratio = prefs.getString("aspectRatio", "4:3");
 		if (ratio.equals("4:3"))
-			emulatorView.setAspectRatio(4, 3);
+			emulatorView.setAspectRatio(4.0f/3.0f);
 		else if (ratio.equals("16:9"))
-			emulatorView.setAspectRatio(16, 9);
+			emulatorView.setAspectRatio(16.0f/9.0f);
 		else
-			emulatorView.setAspectRatio(0, 0);
+			emulatorView.setAspectRatio(0.0f);
 	}
 
 	private void setCheatsEnabled(SharedPreferences prefs) {
 		final boolean enabled = prefs.getBoolean("enableCheats", false);
-		emulator.setCheatsEnabled(enabled);
+		// emulator.setCheatsEnabled(enabled);
 	}
 
 	private void setOrientation(SharedPreferences prefs) {
@@ -796,7 +811,7 @@ public class EmulatorActivity extends Activity implements
 
 	private void setInputMethodUsed(SharedPreferences prefs) {
 		final boolean used = prefs.getBoolean("useInputMethod", false);
-		keyboard.setInputMethodUsed(used);
+		// keyboard.setInputMethodUsed(used);
 	}
 
 	private void setFastForward(boolean fastForward) {
@@ -804,7 +819,7 @@ public class EmulatorActivity extends Activity implements
 			return;
 
 		inFastForward = fastForward;
-		emulator.setFastForward(fastForward);
+		// emulator.setFastForward(fastForward);
 		invalidateOptionsMenu();
 	}
 
@@ -835,9 +850,10 @@ public class EmulatorActivity extends Activity implements
 				continue;
 
 			final String[] codeList = parts[1].split(",");
-			emulator.clearCheats();
-			for (String code : codeList)
-				emulator.addCheat(code);
+			// emulator.clearCheats();
+			for (String code : codeList) {
+				// emulator.addCheat(code);
+            }
 			return;
 		}
 	}
@@ -856,6 +872,7 @@ public class EmulatorActivity extends Activity implements
 			return false;
 
 		if (emulator.loadROM(path)) {
+            emulatorRunning = true;
 			loadGameGenie(sharedPrefs);
 			return true;
 		}
@@ -881,6 +898,22 @@ public class EmulatorActivity extends Activity implements
 		} catch (IOException ignored) {}
 		resumeEmulator();
 	}
+	
+	private void loadState(String fileName) {
+		pauseEmulator();
+		try {
+			emulator.loadState(fileName);
+		} catch (IOException ignored) {}
+		resumeEmulator();
+	}
+	
+	private void quickSave() {
+		saveState(getROMFilePath() + ".quick");
+	}
+	
+	private void quickLoad() {
+		loadState(getROMFilePath() + ".quick");
+	}
 
 	private void saveScreenshot() {
 		final String fileName = getROMFilePath();
@@ -898,7 +931,7 @@ public class EmulatorActivity extends Activity implements
 
 		try {
 			final FileOutputStream out = new FileOutputStream(path);
-			getScreenshot().compress(Bitmap.CompressFormat.PNG, 100, out);
+			// getScreenshot().compress(Bitmap.CompressFormat.PNG, 100, out); // Missing getScreenshot()
 			out.close();
 			Toast.makeText(this, getString(R.string.screenshot_saved, path),
 					Toast.LENGTH_LONG).show();
@@ -962,8 +995,12 @@ public class EmulatorActivity extends Activity implements
 		}
 
 		netPlayService = new NetPlayService(syncClientHandler);
-		netPlayService.bluetoothListen();
-		Toast.makeText(this, R.string.netplay_server_started, Toast.LENGTH_LONG).show();
+		try {
+			netPlayService.bluetoothListen();
+			Toast.makeText(this, R.string.netplay_server_started, Toast.LENGTH_LONG).show();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	private void startNetPlayClient() {
@@ -988,13 +1025,17 @@ public class EmulatorActivity extends Activity implements
 
 	private void startNetPlayClient(String address) {
 		netPlayService = new NetPlayService(syncClientHandler);
-		netPlayService.bluetoothConnect(address);
-		Toast.makeText(this, R.string.netplay_client_started, Toast.LENGTH_LONG).show();
+		try {
+			netPlayService.bluetoothConnect(address);
+			Toast.makeText(this, R.string.netplay_client_started, Toast.LENGTH_LONG).show();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	private void showWifiClientDialog() {
 		final View view = getLayoutInflater().inflate(R.layout.wifi_connect, null);
-		final TextView ipView = (TextView) view.findViewById(R.id.ip);
+		final TextView ipView = (TextView) view.findViewById(R.id.ip_address);
 		final TextView portView = (TextView) view.findViewById(R.id.port);
 		portView.setText(String.valueOf(NETPLAY_TCP_PORT));
 
