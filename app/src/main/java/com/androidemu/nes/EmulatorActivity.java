@@ -662,7 +662,8 @@ public class EmulatorActivity extends Activity implements
 	public void onFrameDrawn() {
 		if (netPlayService != null && netPlayService.isServer())
 			// netPlayService.sendFrame(); // Removido pois o método não existe em NetPlayService
-	}
+	   }
+   }
 
 	private void setFullScreenMode(SharedPreferences prefs) {
 		final boolean fullScreen = prefs.getBoolean("fullScreenMode", false);
