@@ -1786,7 +1786,7 @@ op7E:	@ ROR $nnnn, X
 .endm
 
 .macro	BRANCH_EQ
-	ldreqsb	r1, [REG_PC], #1
+	ldrsb	r1, [REG_PC], #1
 	movne	r1, #1
 	add	REG_PC, REG_PC, r1
 	addeq	REG_CYCLE, REG_CYCLE, #1
