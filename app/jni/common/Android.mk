@@ -30,6 +30,7 @@ LOCAL_C_INCLUDES += \
 
 # Special compiler flags.
 LOCAL_CFLAGS += -O3 -fvisibility=hidden
+LOCAL_CFLAGS += -fPIC
 
 # Don't prelink this library.  For more efficient code, you may want
 # to add this library to the prelink map and set this to true. However,
