@@ -205,6 +205,7 @@ LOCAL_DISABLE_FATAL_LINKER_WARNINGS = true
 
 # Added -fcommon to fix duplicate symbol errors (e.g. MMC5SPRVPage)
 LOCAL_CFLAGS += -O3 -fvisibility=hidden -fcommon
+LOCAL_CFLAGS += -fPIC
 
 LOCAL_CFLAGS += \
 	-DHAVE_ASPRINTF \
