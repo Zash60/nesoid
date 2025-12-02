@@ -217,7 +217,7 @@ ldmfd sp!,{r0-r3,r12,lr}
 	@ RAM
 	biceq	r0, REG_ADDR, #0x1800
 	addeq	r0, r0, #OTOFFS_NES_RAM
-	ldreqb	r0, [r0, REG_OP_TABLE]
+	ldrb	r0, [r0, REG_OP_TABLE]
 	blne	read_byte
 .endm
 
@@ -268,7 +268,7 @@ ldmfd sp!,{r0-r3,r12,lr}
 	biceq	REG_ADDR, REG_ADDR, #0x1800
 	addeq	REG_ADDR, REG_ADDR, #OTOFFS_NES_RAM
 
-	streqb	r0, [REG_ADDR, REG_OP_TABLE]
+	strb	r0, [REG_ADDR, REG_OP_TABLE]
 	blne	write_byte
 .endm
 
@@ -420,9 +420,9 @@ ldmfd sp!,{r0-r3,r12,lr}
 	orr	REG_ADDR, REG_ADDR, r0, lsl #8
 .else
 	tst	REG_PC, #1
-	ldrneb	REG_ADDR, [REG_PC], #1
-	ldrneb	r0, [REG_PC], #1
-	ldreqh	REG_ADDR, [REG_PC], #2
+	ldrb	REG_ADDR, [REG_PC], #1
+	ldrb	r0, [REG_PC], #1
+	ldrh	REG_ADDR, [REG_PC], #2
 	orrne	REG_ADDR, REG_ADDR, r0, lsl #8
 .endif
 .endm
@@ -1797,7 +1797,7 @@ op7E:	@ ROR $nnnn, X
 .endm
 
 .macro	BRANCH_NE
-	ldrnesb	r1, [REG_PC], #1
+	ldrsb	r1, [REG_PC], #1
 	moveq	r1, #1
 	add	REG_PC, REG_PC, r1
 	addne	REG_CYCLE, REG_CYCLE, #1
