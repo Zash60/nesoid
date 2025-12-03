@@ -187,7 +187,7 @@ local void init_linkedlist(linkedlist_data* ll)
     ll->first_block = ll->last_block = NULL;
 }
 
-local void free_linkedlist(linkedlist_data* ll)
+local void free_linkedlist(linked_list_data* ll)
 {
     free_datablock(ll->first_block);
     ll->first_block = ll->last_block = NULL;
@@ -351,7 +351,7 @@ local int ziplocal_getShort(const zlib_filefunc_def* pzlib_filefunc_def,
     uLong *pX);
 local int ziplocal_getShort(const zlib_filefunc_def* pzlib_filefunc_def,
     voidpf filestream,
-    uLong *pX)
+    uLong *pX);
 {
     uLong x ;
     int i;
@@ -752,11 +752,6 @@ extern int ZEXPORT zipOpenNewFileInZip3(zipFile file, const char* filename, cons
         ziplocal_putValue_inmemory(zi->ci.central_header+36,(uLong)0,2);
     else
         ziplocal_putValue_inmemory(zi->ci.central_header+36,(uLong)zipfi->internal_fa,2);
-
-    if (zipfi==NULL)
-        ziplocal_putValue_inmemory(zi->ci.central_header+38,(uLong)0,4);
-    else
-        ziplocal_putValue_inmemory(zi->ci.central_header+38,(uLong)zipfi->external_fa,4);
 
     ziplocal_putValue_inmemory(zi->ci.central_header+42,(uLong)zi->ci.pos_local_header- zi->add_position_when_writting_offset,4);
 
