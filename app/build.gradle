@@ -1,13 +1,13 @@
+// app/build.gradle
+
 plugins {
     id 'com.android.application'
 }
-
 
 android {
     namespace 'com.androidemu.nes'
     compileSdk 34
     ndkVersion "26.1.10909125"
-
 
     defaultConfig {
         applicationId "com.androidemu.nes"
@@ -16,19 +16,15 @@ android {
         versionCode 61
         versionName "2.5"
 
-
+        // CORREÇÃO 1: Mova a configuração de ABI para aqui dentro do externalNativeBuild.
+        // Isso é mais limpo e centraliza a configuração da compilação nativa.
         externalNativeBuild {
             ndkBuild {
+                // Especifica para quais arquiteturas de CPU o código nativo deve ser compilado.
                 abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
             }
         }
-
-
-        ndk {
-            abiFilters "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
-        }
     }
-
 
     buildTypes {
         release {
@@ -37,20 +33,25 @@ android {
         }
     }
 
-
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
 
+    // CORREÇÃO 2: Adicione este bloco para resolver o aviso de buildConfig obsoleto.
+    // Isso informa explicitamente ao AGP para gerar a classe BuildConfig.
+    buildFeatures {
+        buildConfig true
+    }
 
+    // CORREÇÃO 3: Mantenha apenas este bloco externo para apontar para o Android.mk.
+    // A configuração de abiFilters foi movida para defaultConfig.
     externalNativeBuild {
         ndkBuild {
             path file('jni/Android.mk')
         }
     }
 }
-
 
 dependencies {
     // Substituindo a dependência antiga do Support Library
