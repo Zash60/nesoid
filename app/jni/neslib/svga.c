@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
+#include <stdint.h>  // Added for intptr_t
 
 #include <stdarg.h>
 
@@ -215,51 +216,51 @@ void DriverInterface(int w, void *d)
   case DES_RESET:if(netplay!=2) CommandQueue=30;break;
   case DES_POWER:if(netplay!=2) CommandQueue=31;break;
 
-  case DES_VSUNIDIPSET:CommandQueue=10+(int)d;break;
+  case DES_VSUNIDIPSET:CommandQueue=10+(intptr_t)d;break;
   case DES_VSUNITOGGLEDIPVIEW:CommandQueue=10;break;
   case DES_VSUNICOIN:CommandQueue=19;break;
 #if 0
   case DES_NTSCDEC:
-		  if(ntsccol && FCEUGameInfo.type!=GIT_VSUNI && !PAL && FCEUGameInfo.type!=GIT_NSF)
-		  {
-		   char which;
-		   if(controlselect)
-		   {
-		    if(controllength)
-		    {
-		     which=controlselect==1?ntschue:ntsctint;
-		     which--;
-		     if(which<0) which=0;
-			 if(controlselect==1)
-			  ntschue=which;
-			 else ntsctint=which;
-		     CalculatePalette();
-		    }
-		   controllength=360;
-		    }
-		   }
-		  break;
+          if(ntsccol && FCEUGameInfo.type!=GIT_VSUNI && !PAL && FCEUGameInfo.type!=GIT_NSF)
+          {
+           char which;
+           if(controlselect)
+           {
+            if(controllength)
+            {
+             which=controlselect==1?ntschue:ntsctint;
+             which--;
+             if(which<0) which=0;
+             if(controlselect==1)
+              ntschue=which;
+             else ntsctint=which;
+             CalculatePalette();
+            }
+           controllength=360;
+            }
+           }
+          break;
   case DES_NTSCINC:
-		   if(ntsccol && FCEUGameInfo.type!=GIT_VSUNI && !PAL && FCEUGameInfo.type!=GIT_NSF)
-		     if(controlselect)
-		     {
-		      if(controllength)
-		      {
-		       switch(controlselect)
-		       {
-		        case 1:ntschue++;
-		               if(ntschue>128) ntschue=128;
-		               CalculatePalette();
-		               break;
-		        case 2:ntsctint++;
-		               if(ntsctint>128) ntsctint=128;
-		               CalculatePalette();
-		               break;
-		       }
-		      }
-		      controllength=360;
-		     }
-          	    break;
+           if(ntsccol && FCEUGameInfo.type!=GIT_VSUNI && !PAL && FCEUGameInfo.type!=GIT_NSF)
+             if(controlselect)
+             {
+              if(controllength)
+              {
+               switch(controlselect)
+               {
+                case 1:ntschue++;
+                       if(ntschue>128) ntschue=128;
+                       CalculatePalette();
+                       break;
+                case 2:ntsctint++;
+                       if(ntsctint>128) ntsctint=128;
+                       CalculatePalette();
+                       break;
+               }
+              }
+              controllength=360;
+             }
+                  break;
 #endif
   }
 }
@@ -283,43 +284,43 @@ void FCEU_PutImageDummy(void)
 void FCEU_PutImage(void)
 {
         if(FCEUGameInfo.type==GIT_NSF)
-	{
+    {
          DrawNSF(XBuf);
-	 /* Save snapshot after NSF screen is drawn.  Why would we want to
-	    do it before?
-	 */
+     /* Save snapshot after NSF screen is drawn.  Why would we want to
+        do it before?
+     */
          if(dosnapsave)
          {
           ReallySnap();
           dosnapsave=0;
          }
-	}
+    }
         else
         {
-	 /* Save snapshot before overlay stuff is written. */
+     /* Save snapshot before overlay stuff is written. */
          if(dosnapsave)
          {
           ReallySnap();
           dosnapsave=0;
          }
-	 if(FCEUGameInfo.type==GIT_VSUNI)
-		 FCEU_VSUniDraw(XBuf);
+     if(FCEUGameInfo.type==GIT_VSUNI)
+         FCEU_VSUniDraw(XBuf);
 
-	 //FCEU_DrawSaveStates(XBuf);
-	 //FCEU_DrawMovies(XBuf);
-	 //FCEU_DrawNTSCControlBars(XBuf);
-	 //FCEU_DrawRecordingStatus(XBuf);
+     //FCEU_DrawSaveStates(XBuf);
+     //FCEU_DrawMovies(XBuf);
+     //FCEU_DrawNTSCControlBars(XBuf);
+     //FCEU_DrawRecordingStatus(XBuf);
 
          //if(controllength) {controllength--;DrawBars();}
         }
-	DrawMessage();
-	#ifdef FPS
-	{
-	extern uint64 frcount;
-	frcount++;
-	}
-	#endif
-	DrawInput(XBuf+8);
+    DrawMessage();
+    #ifdef FPS
+    {
+    extern uint64 frcount;
+    frcount++;
+    }
+    #endif
+    DrawInput(XBuf+8);
 }
 
 #if 0
@@ -350,4 +351,3 @@ void DoCommand(uint8 c)
  }
 }
 #endif
-
