@@ -138,7 +138,7 @@ static INLINE uint8 POP(void)
 
 #if 0
 static uint8 ZNTable[256] = {
-        Z_FLAG,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        Z_FLAG,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
         0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
         0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
         0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -146,8 +146,8 @@ static uint8 ZNTable[256] = {
         0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
         0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
         0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,
-	N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,
+    N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,
+    N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,
         N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,
         N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,
         N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,
@@ -156,12 +156,12 @@ static uint8 ZNTable[256] = {
         N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG,N_FLAG
 };
 #endif
-/* Some of these operations will only make sense if you know what the flag
+/* Some of these operations will only make sense if you know what that flag
    constants are. */
 //#define X_ZN(zort)         _P&=~(Z_FLAG|N_FLAG);_P|=ZNTable[zort]
 //#define X_ZNT(zort)	_P|=ZNTable[zort]
-#define X_ZN(zort)         _P&=~(Z_FLAG|N_FLAG);if(!zort) _P|=Z_FLAG;else _P|=zort&N_FLAG
-#define X_ZNT(zort)	if(!zort) _P|=Z_FLAG;else _P|=(zort&N_FLAG)
+#define X_ZN(zort)         _P&=~(Z_FLAG|N_FLAG);if(!(zort)) _P|=Z_FLAG;else _P|=zort&N_FLAG
+#define X_ZNT(zort)	if(!(zort)) _P|=Z_FLAG;else _P|=(zort&N_FLAG)
 
 /* Care must be taken if you want to turn this into a macro.  Use { and }. */
 #define JR();	\
@@ -188,36 +188,36 @@ static uint8 ZNTable[256] = {
 #define ORA        _A|=x;X_ZN(_A)
 
 #define ADC  {	\
-	      uint32 l=_A+x+(_P&1);	\
-	      _P&=~(Z_FLAG|C_FLAG|N_FLAG|V_FLAG);	\
-	      _P|=((((_A^x)&0x80)^0x80) & ((_A^l)&0x80))>>1;	\
-	      _P|=(l>>8)&C_FLAG;	\
-	      _A=l;	\
-	      X_ZNT(_A);	\
-	     }
+          uint32 l=_A+x+(_P&1);	\
+          _P&=~(Z_FLAG|C_FLAG|N_FLAG|V_FLAG);	\
+          _P|=((((_A^x)&0x80)^0x80) & ((_A^l)&0x80))>>1;	\
+          _P|=(l>>8)&C_FLAG;	\
+          _A=l;	\
+          X_ZNT(_A);	\
+         }
 #define SBC  {	\
-	      uint32 l=_A-x-((_P&1)^1);	\
-	      _P&=~(Z_FLAG|C_FLAG|N_FLAG|V_FLAG);	\
-	      _P|=((_A^l)&(_A^x)&0x80)>>1;	\
-	      _P|=((l>>8)&C_FLAG)^C_FLAG;	\
-	      _A=l;	\
-	      X_ZNT(_A);	\
-	     }
+          uint32 l=_A-x-((_P&1)^1);	\
+          _P&=~(Z_FLAG|C_FLAG|N_FLAG|V_FLAG);	\
+          _P|=((_A^l)&(_A^x)&0x80)>>1;	\
+          _P|=((l>>8)&C_FLAG)^C_FLAG;	\
+          _A=l;	\
+          X_ZNT(_A);	\
+         }
 
 #define CMPL(a1,a2) {	\
-		     uint32 t=a1-a2;	\
-		     X_ZN(t&0xFF);	\
-		     _P&=~C_FLAG;	\
-		     _P|=((t>>8)&C_FLAG)^C_FLAG;	\
-		    }
+             uint32 t=a1-a2;	\
+             X_ZN(t&0xFF);	\
+             _P&=~C_FLAG;	\
+             _P|=((t>>8)&C_FLAG)^C_FLAG;	\
+            }
 
-/* Special undocumented operation.  Very similar to CMP. */
+/* Special undocumented operation.  Very similar to CMP.  */
 #define AXS	    {	\
                      uint32 t=(_A&_X)-x;    \
                      X_ZN(t&0xFF);      \
                      _P&=~C_FLAG;       \
                      _P|=((t>>8)&C_FLAG)^C_FLAG;        \
-		     _X=t;	\
+             _X=t;	\
                     }
 
 #define CMP		CMPL(_A,x)
@@ -235,21 +235,21 @@ static uint8 ZNTable[256] = {
 #define LSRA	_P&=~(C_FLAG|N_FLAG|Z_FLAG);_P|=_A&1;_A>>=1;X_ZNT(_A)
 
 #define ROL	{	\
-		 uint8 l=x>>7;	\
-		 x<<=1;	\
-		 x|=_P&C_FLAG;	\
-		 _P&=~(Z_FLAG|N_FLAG|C_FLAG);	\
-		 _P|=l;	\
-		 X_ZNT(x);	\
-		}
+         uint8 l=x>>7;	\
+         x<<=1;	\
+         x|=_P&C_FLAG;	\
+         _P&=~(Z_FLAG|N_FLAG|C_FLAG);	\
+         _P|=l;	\
+         X_ZNT(x);	\
+        }
 #define ROR	{	\
-		 uint8 l=x&1;	\
-		 x>>=1;	\
-		 x|=(_P&C_FLAG)<<7;	\
-		 _P&=~(Z_FLAG|N_FLAG|C_FLAG);	\
-		 _P|=l;	\
-		 X_ZNT(x);	\
-		}
+         uint8 l=x&1;	\
+         x>>=1;	\
+         x|=(_P&C_FLAG)<<7;	\
+         _P&=~(Z_FLAG|N_FLAG|C_FLAG);	\
+         _P|=l;	\
+         X_ZNT(x);	\
+        }
 
 /* Icky icky thing for some undocumented instructions.  Can easily be
    broken if names of local variables are changed.
@@ -479,98 +479,96 @@ void X6502_Power_c(void)
 void X6502_Run_c(void/*int32 cycles*/)
 {
 /*
-	if(PAL)
-	 cycles*=15;          // 15*4=60
-	else
-	 cycles*=16;          // 16*4=64
+    if(PAL)
+     cycles*=15;          // 15*4=60
+    else
+     cycles*=16;          // 16*4=64
 
-	_count+=cycles;
+    _count+=cycles;
 */
 //	if (_count <= 0) asdc++;
 
-	while(_count>0)
-	{
-	 int32 temp;
-	 uint8 b1;
+    while(_count>0)
+    {
+     int32 temp;
+     uint8 b1;
 
-	 if(_IRQlow)
-	 {
-	  if(_IRQlow&FCEU_IQNMI)
-	   TriggerNMIReal();
-	  else
-	   TriggerIRQReal();
+     if(_IRQlow)
+     {
+      if(_IRQlow&FCEU_IQNMI)
+       TriggerNMIReal();
+      else
+       TriggerIRQReal();
 
-	  _IRQlow&=~(FCEU_IQTEMP|FCEU_IQNMI);
-	  if(_count<=0)
-	  {
+      _IRQlow&=~(FCEU_IQTEMP|FCEU_IQNMI);
+      if(_count<=0)
+      {
 #ifdef DEBUG_ASM_6502
-	   if(MapIRQHook) mapirq_cyc_c = _tcount;
-	   _tcount=0;
+       if(MapIRQHook) mapirq_cyc_c = _tcount;
+       _tcount=0;
 #endif
-	   _PI=_P;
-	   return; /* Should increase accuracy without a major speed hit. */
-	  }
-	 }
-	 _PI=_P;
+       _PI=_P;
+       return; /* Should increase accuracy without a major speed hit. */
+      }
+     }
+     _PI=_P;
 #ifdef DEBUG_ASM_6502
-	 b1=RdMem(_PC++); _PC--;
+     b1=RdMem(_PC++); _PC--;
 #else
-	 b1=RdMem(_PC);
+     b1=RdMem(_PC);
 #endif
-	 ADDCYC(CycTable[b1]);
-	 temp=_tcount;
+     ADDCYC(CycTable[b1]);
+     temp=_tcount;
 
-	 temp*=48;
+     temp*=48;
 
-	 fhcnt-=temp;
-	 if(fhcnt<=0)
-	 {
-	  FrameSoundUpdate();
-	  fhcnt+=fhinc;
-	 }
+     fhcnt-=temp;
+     if(fhcnt<=0)
+     {
+      FrameSoundUpdate();
+      fhcnt+=fhinc;
+     }
 
-	 if(PCMIRQCount>0)
-	 {
-	  PCMIRQCount-=temp;
-	  if(PCMIRQCount<=0)
-	  {
-	   vdis=1;
-	   if((PSG[0x10]&0x80) && !(PSG[0x10]&0x40))
-	   {
-	    extern uint8 SIRQStat;
-	    SIRQStat|=0x80;
-	    X6502_IRQBegin(FCEU_IQDPCM);
-	   }
-	  }
-	 }
+     if(PCMIRQCount>0)
+     {
+      PCMIRQCount-=temp;
+      if(PCMIRQCount<=0)
+      {
+       vdis=1;
+       if((PSG[0x10]&0x80) && !(PSG[0x10]&0x40))
+       {
+        extern uint8 SIRQStat;
+        SIRQStat|=0x80;
+        X6502_IRQBegin(FCEU_IQDPCM);
+       }
+      }
+     }
 
 #ifdef DEBUG_ASM_6502
-	 PC_prev = _PC;
-	 OP_prev = b1;
+     PC_prev = _PC;
+     OP_prev = b1;
 #endif
-	  //printf("$%04x:$%02x\n",_PC,b1);
-	 //_PC++;
-	 //printf("$%02x\n",b1);
-	 _PC++;
+      //printf("$%04x:$%02x\n",_PC,b1);
+     //_PC++;
+     //printf("$%02x\n",b1);
+     _PC++;
          switch(b1)
          {
           #include "ops.h"
          }
 
-	 temp=_tcount; /* Gradius II (J) glitches if _tcount is not used */
-	 _tcount=0;
+     temp=_tcount; /* Gradius II (J) glitches if _tcount is not used */
+     _tcount=0;
 
-	 if(MapIRQHook) {
+     if(MapIRQHook) {
 #ifdef DEBUG_ASM_6502
-	  mapirq_cyc_c = temp;
+      mapirq_cyc_c = temp;
 #endif
-	  MapIRQHook(temp);
-	 }
+      MapIRQHook(temp);
+     }
 
 #ifdef DEBUG_ASM_6502
-	 _PI=_P;
+     _PI=_P;
 #endif
-	}
+    }
 }
-
-
