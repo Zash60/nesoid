@@ -303,6 +303,7 @@ local void ziplocal_putValue_inmemory(void* dest, uLong x, int nbByte)
 /****************************************************************************/
 
 
+local uLong ziplocal_TmzDateToDosDate(const tm_zip* ptm, uLong dosDate);
 local uLong ziplocal_TmzDateToDosDate(const tm_zip* ptm, uLong dosDate)
 {
     uLong year = (uLong)ptm->tm_year;
@@ -358,11 +359,11 @@ local int ziplocal_getShort(const zlib_filefunc_def* pzlib_filefunc_def,
 
     err = ziplocal_getByte(pzlib_filefunc_def,filestream,&i);
     x = (uLong)i;
-
+    
     if (err==ZIP_OK)
         err = ziplocal_getByte(pzlib_filefunc_def,filestream,&i);
     x += ((uLong)i)<<8;
-
+   
     if (err==ZIP_OK)
         *pX = x;
     else
@@ -383,7 +384,7 @@ local int ziplocal_getLong(const zlib_filefunc_def* pzlib_filefunc_def,
 
     err = ziplocal_getByte(pzlib_filefunc_def,filestream,&i);
     x = (uLong)i;
-
+    
     if (err==ZIP_OK)
         err = ziplocal_getByte(pzlib_filefunc_def,filestream,&i);
     x += ((uLong)i)<<8;
@@ -395,7 +396,7 @@ local int ziplocal_getLong(const zlib_filefunc_def* pzlib_filefunc_def,
     if (err==ZIP_OK)
         err = ziplocal_getByte(pzlib_filefunc_def,filestream,&i);
     x += ((uLong)i)<<24;
-
+   
     if (err==ZIP_OK)
         *pX = x;
     else
@@ -420,7 +421,7 @@ local uLong ziplocal_SearchCentralDir(const zlib_filefunc_def* pzlib_filefunc_de
     uLong uBackRead;
     uLong uMaxBack=0xffff; /* maximum size of global comment */
     uLong uPosFound=0;
-
+    
     if (ZSEEK(*pzlib_filefunc_def,filestream,0,ZLIB_FILEFUNC_SEEK_END) != 0)
         return 0;
 
@@ -444,7 +445,7 @@ local uLong ziplocal_SearchCentralDir(const zlib_filefunc_def* pzlib_filefunc_de
         else
             uBackRead+=BUFREADCOMMENT;
         uReadPos = uSizeFile-uBackRead ;
-
+        
         uReadSize = ((BUFREADCOMMENT+4) < (uSizeFile-uReadPos)) ?
                      (BUFREADCOMMENT+4) : (uSizeFile-uReadPos);
         if (ZSEEK(*pzlib_filefunc_def,filestream,uReadPos,ZLIB_FILEFUNC_SEEK_SET)!=0)
@@ -455,7 +456,7 @@ local uLong ziplocal_SearchCentralDir(const zlib_filefunc_def* pzlib_filefunc_de
 
         for (i=(int)uReadSize-3; (i--)>0;)
             if (((*(buf+i))==0x50) && ((*(buf+i+1))==0x4b) &&
-                ((*(buf+i+2))==0x05) && ((*(buf+i+3))==0x06)
+                ((*(buf+i+2))==0x05) && ((*(buf+i+3))==0x06))
             {
                 uPosFound = uReadPos+i;
                 break;
@@ -520,13 +521,13 @@ extern zipFile ZEXPORT zipOpen2(const char *pathname,
         uLong offset_central_dir;   /* offset of start of central directory */
         uLong central_pos,uL;
 
-        uLong number_disk;          /* number of the current dist, used for
+        uLong number_disk;          /* number of the current dist, used for 
                                     spaning ZIP, unsupported, always 0*/
         uLong number_disk_with_CD;  /* number of the disk with central dir, used
                                     for spaning ZIP, unsupported, always 0*/
         uLong number_entry;
         uLong number_entry_CD;      /* total number of entries in
-                                    central dir
+                                    central dir 
                                     (same than number_entry on nospan) */
         uLong size_comment;
 
@@ -538,7 +539,7 @@ extern zipFile ZEXPORT zipOpen2(const char *pathname,
                                         central_pos,ZLIB_FILEFUNC_SEEK_SET)!=0)
             err=ZIP_ERRNO;
 
-        /* the signature, already checked */
+        /* signature, already checked */
         if (ziplocal_getLong(&ziinit.z_filefunc, ziinit.filestream,&uL)!=ZIP_OK)
             err=ZIP_ERRNO;
 
@@ -567,7 +568,7 @@ extern zipFile ZEXPORT zipOpen2(const char *pathname,
         if (ziplocal_getLong(&ziinit.z_filefunc, ziinit.filestream,&size_central_dir)!=ZIP_OK)
             err=ZIP_ERRNO;
 
-        /* offset of the start of the central directory with respect to the
+        /* offset of the start of the central directory with respect to the 
             starting disk number */
         if (ziplocal_getLong(&ziinit.z_filefunc, ziinit.filestream,&offset_central_dir)!=ZIP_OK)
             err=ZIP_ERRNO;
@@ -832,7 +833,7 @@ extern int ZEXPORT zipOpenNewFileInZip3(zipFile file, const char* filename, cons
     }
 #    ifndef NOCRYPT
     zi->ci.crypt_header_size = 0;
-    if ((err==Z_OK) && (password != NULL))
+    if ((err==ZIP_OK) && (password != NULL))
     {
         unsigned char bufHead[RAND_HEAD_LEN];
         unsigned int sizeHead;
@@ -973,9 +974,9 @@ extern int ZEXPORT zipCloseFileInZipRaw(zipFile file, uLong uncompressed_size, u
 
     if ((zi->ci.method == Z_DEFLATED) && (!zi->ci.raw))
         while (err==ZIP_OK)
-    {
-        uLong uTotalOutBefore;
-        if (zi->ci.stream.avail_out == 0)
+        {
+            uLong uTotalOutBefore;
+            if (zi->ci.stream.avail_out == 0)
         {
             if (zipFlushWriteBuffer(zi) == ZIP_ERRNO)
                 err = ZIP_ERRNO;
@@ -1030,7 +1031,7 @@ extern int ZEXPORT zipCloseFileInZipRaw(zipFile file, uLong uncompressed_size, u
                   zi->ci.pos_local_header + 14,ZLIB_FILEFUNC_SEEK_SET)!=0)
             err = ZIP_ERRNO;
    
-    if (err==ZIP_OK)
+        if (err==ZIP_OK)
             err = ziplocal_putValue(&zi->z_filefunc,zi->filestream,crc32,4); /* crc 32, unknown */
 
         if (err==ZIP_OK) /* compressed size, unknown */
@@ -1095,7 +1096,6 @@ extern int ZEXPORT zipClose(zipFile file, const char* global_comment)
             size_centraldir += ldi->filled_in_this_block;
             ldi = ldi->next_datablock;
         }
-    }
     free_datablock(zi->central_dir.first_block);
 
     if (err==ZIP_OK) /* Magic End */
