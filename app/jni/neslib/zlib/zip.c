@@ -129,8 +129,8 @@ typedef struct
     uLong crc32;
     int  encrypt;
 #ifndef NOCRYPT
-    unsigned long keys[3];     /* keys defining the pseudo-random sequence */
-    const unsigned long* pcrc_32_tab;
+    unsigned int keys[3];     /* keys defining the pseudo-random sequence */
+    const unsigned int* pcrc_32_tab;
     int crypt_header_size;
 #endif
 } curfile_info;
