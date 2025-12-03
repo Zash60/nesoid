@@ -182,6 +182,7 @@ LOCAL_SRC_FILES := \
 
 ifeq ($(TARGET_ARCH),arm)
     LOCAL_CFLAGS += -DASM_6502
+    LOCAL_ASFLAGS += -fPIC
     LOCAL_SRC_FILES += \
         ncpu.S \
         giz_blit.s \
