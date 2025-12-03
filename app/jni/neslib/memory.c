@@ -19,6 +19,7 @@
  */
 
 #include <stdlib.h>
+#include <stdint.h>  // Added for intptr_t
 
 #include "types.h"
 #include "fce.h"
@@ -66,8 +67,8 @@ void FASTAPASS(3) FCEU_memmove(void *d, void *s, uint32 l)
  int t;
 
  /* Type really doesn't matter. */
- t=(int)d;
- t|=(int)s;
+ t=(intptr_t)d;  // Fixed: Changed from (int)d to (intptr_t)d
+ t|=(intptr_t)s; // Fixed: Changed from (int)s to (intptr_t)s
  t|=(int)l;
 
  if(t&3)    // Not 4-byte aligned and/or length is not a multiple of 4.
