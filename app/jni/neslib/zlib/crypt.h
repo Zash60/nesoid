@@ -11,7 +11,7 @@
 
 /* Empty stubs for encryption functions */
 #define init_keys(pw, keys, pcrc_32_tab) do { }
-#define crypthead(password, buf, buf_size, keys, pcrc_32_tab, crcForCrypting) do { return 0; }
-#define zencode(keys, pcrc_32_tab, c, t) do { return c; }
+#define crypthead(password, buf, buf_size, keys, pcrc_32_tab, crcForCrypting) 0
+#define zencode(keys, pcrc_32_tab, c, t) (c)
 
 #endif /* _CRYPT_H */
