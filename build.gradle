@@ -1,9 +1,11 @@
+// build.gradle (Project)
+
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 plugins {
+    // A versão do plugin está definida aqui, o que é uma boa prática.
     id 'com.android.application' version '8.7.3' apply false
     id 'com.android.library' version '8.7.3' apply false
 }
-
 
 task clean(type: Delete) {
     delete rootProject.buildDir
