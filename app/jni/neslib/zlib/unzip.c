@@ -305,7 +305,7 @@ local uLong unzlocal_SearchCentralDir(FILE* fin)
 
                 for (i=(int)uReadSize-3; (i--)>0;)
             if (((*(buf+i))==0x50) && ((*(buf+i+1))==0x4b) && 
-                ((*(buf+i+2))==0x05) && ((*(buf+i+3))==0x06)
+                ((*(buf+i+2))==0x05) && ((*(buf+i+3))==0x06))
             {
                 uPosFound = uReadPos+i;
                 break;
@@ -464,7 +464,7 @@ local void unzlocal_DosDateToTmuDate (uLong ulDosDate, tm_unz* ptm)
     uLong uDate;
     uDate = (uLong)(ulDosDate>>16);
     ptm->tm_mday = (uInt)(uDate&0x1f) ;
-    ptm->tm_mon = (uInt)(((uDate)&0x1E0)/0x20)-1) ;
+    ptm->tm_mon = (uInt)(((uDate)&0x1E0)/0x20)-1 ;
     ptm->tm_year = (uInt)(((uDate&0x0FE00)/0x0200)+1980) ;
 
     ptm->tm_hour = (uInt) ((ulDosDate &0xF800)/0x800);
@@ -820,7 +820,7 @@ local int unzlocal_CheckCurrentFileCoherencyHeader (unz_s* s, uInt* piSizeVar,
 
     if (unzlocal_getLong(s->file,&uData) != UNZ_OK) /* size compr */
         err=UNZ_ERRNO;
-    else if ((err==ANSI_OK) && (uData!=s->cur_file_info.compressed_size) &&
+    else if ((err==UNZ_OK) && (uData!=s->cur_file_info.compressed_size) &&
                               ((uFlags & 8)==0))
         err=UNZ_BADZIPFILE;
 
@@ -1098,7 +1098,7 @@ extern z_off_t ZEXPORT unztell (unzFile file)
 */
 extern int ZEXPORT unzeof (unzFile file)
 {
-    unz_is* s;
+    unz_s* s;
     file_in_zip_read_info_s* pfile_in_zip_read_info;
     if (file==NULL)
         return UNZ_PARAMERROR;
