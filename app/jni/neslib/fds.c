@@ -42,9 +42,9 @@
 #include "svga.h"
 
 /*  TODO:  Add code to put a delay in between the time a disk is inserted
-	and the when it can be successfully read/written to.  This should
-	prevent writes to wrong places OR add code to prevent disk ejects
-	when the virtual motor is on(mmm...virtual motor).
+    and the when it can be successfully read/written to.  This should
+    prevent writes to wrong places OR add code to prevent disk ejects
+    when the virtual motor is on(mmm...virtual motor).
 */
 
 static DECLFR(FDSRead4030);
@@ -115,7 +115,7 @@ static void FDSStateRestore(int version)
 
 }
 
-void FDSSound();
+void FDSSound(int c);  // Fixed: Added parameter to match function definition
 void FDSSoundReset(void);
 void FDSSoundStateAdd(void);
 static void RenderSound(void);
@@ -164,12 +164,12 @@ static void FDSInit(void)
 
 void FCEU_FDSInsert(void)
 {
-	if(TotalSides==0)
-	{
+    if(TotalSides==0)
+    {
         FCEU_DispMessage("Not FDS; can't eject disk.");
-		return;
-	}
-	if(InDisk==255)
+        return;
+    }
+    if(InDisk==255)
         {
          FCEU_DispMessage("Disk %d Side %s Inserted",SelectDisk>>1,(SelectDisk&1)?"B":"A");
          InDisk=SelectDisk;
@@ -188,18 +188,18 @@ void FCEU_FDSEject(void)
 */
 void FCEU_FDSSelect(void)
 {
-	if(TotalSides==0)
-	{
-	  FCEU_DispMessage("Not FDS; can't select disk.");
-	  return;
-	}
-	if(InDisk!=255)
+    if(TotalSides==0)
+    {
+      FCEU_DispMessage("Not FDS; can't select disk.");
+      return;
+    }
+    if(InDisk!=255)
         {
          FCEU_DispMessage("Eject disk before selecting.");
-	 return;
+     return;
         }
-	    SelectDisk=((SelectDisk+1)%TotalSides)&3;
-	    FCEU_DispMessage("Disk %d Side %c Selected",SelectDisk>>1,(SelectDisk&1)?'B':'A');
+        SelectDisk=((SelectDisk+1)%TotalSides)&3;
+        FCEU_DispMessage("Disk %d Side %c Selected",SelectDisk>>1,(SelectDisk&1)?'B':'A');
 }
 
 static void FP_FASTAPASS(1) FDSFix(int a)
@@ -237,38 +237,38 @@ static void FP_FASTAPASS(1) FDSFix(int a)
 
 static DECLFR(FDSRead4030)
 {
-	uint8 ret=0;
+    uint8 ret=0;
 
-	/* Cheap hack. */
+    /* Cheap hack. */
 #ifndef ASM_6502
-	if(X.IRQlow&FCEU_IQEXT) ret|=1;
-	if(X.IRQlow&FCEU_IQEXT2) ret|=2;
+    if(X.IRQlow&FCEU_IQEXT) ret|=1;
+    if(X.IRQlow&FCEU_IQEXT2) ret|=2;
 #else
-	if((nes_registers[4]>>8)&FCEU_IQEXT) ret|=1;
-	if((nes_registers[4]>>8)&FCEU_IQEXT2) ret|=2;
+    if((nes_registers[4]>>8)&FCEU_IQEXT) ret|=1;
+    if((nes_registers[4]>>8)&FCEU_IQEXT2) ret|=2;
 #endif
 
-	if(!fceuindbg)
-	{
-	 X6502_IRQEnd(FCEU_IQEXT);
-	 X6502_IRQEnd(FCEU_IQEXT2);
-	}
-	return ret;
+    if(!fceuindbg)
+    {
+     X6502_IRQEnd(FCEU_IQEXT);
+     X6502_IRQEnd(FCEU_IQEXT2);
+    }
+    return ret;
 }
 
 static DECLFR(FDSRead4031)
 {
-	static uint8 z=0;
-	if(InDisk!=255)
-	{
+    static uint8 z=0;
+    if(InDisk!=255)
+    {
          z=diskdata[InDisk][DiskPtr];
-	 if(!fceuindbg)
-	 {
+     if(!fceuindbg)
+     {
           if(DiskPtr<64999) DiskPtr++;
           DiskSeekIRQ=150;
           X6502_IRQEnd(FCEU_IQEXT2);
-	 }
-	}
+     }
+    }
         return z;
 }
 static DECLFR(FDSRead4032)
@@ -286,7 +286,7 @@ static DECLFR(FDSRead4032)
 
 static DECLFR(FDSRead4033)
 {
-	return 0x80; // battery
+    return 0x80; // battery
 }
 
 static DECLFW(FDSRAMWrite)
@@ -312,16 +312,16 @@ typedef struct {
   int64 cycles;     // Cycles per PCM sample
   int64 count;    // Cycle counter
   int64 envcount;    // Envelope cycle counter
-	uint32 b19shiftreg60;
-	uint32 b24adder66;
-	uint32 b24latch68;
-	uint32 b17latch76;
+    uint32 b19shiftreg60;
+    uint32 b24adder66;
+    uint32 b24latch68;
+    uint32 b17latch76;
   int32 clockcount;  // Counter to divide frequency by 8.
   uint8 b8shiftreg88;  // Modulation register.
   uint8 amplitude[2];  // Current amplitudes.
-	uint8 speedo[2];
-	uint8 mwcount;
-	uint8 mwstart;
+    uint8 speedo[2];
+    uint8 mwcount;
+    uint8 mwstart;
         uint8 mwave[0x20];      // Modulation waveform
         uint8 cwave[0x40];      // Game-defined waveform(carrier)
         uint8 SPSG[0xB];
@@ -382,18 +382,18 @@ static DECLFW(FDSSWrite)
  {
   case 0x0:
   case 0x4: if(V&0x80)
-	     amplitude[(A&0xF)>>2]=V&0x3F; //)>0x20?0x20:(V&0x3F);
-	    break;
+         amplitude[(A&0xF)>>2]=V&0x3F; //)>0x20?0x20:(V&0x3F);
+        break;
   case 0x5://printf("$%04x:$%02x\n",A,V);
-		break;
+        break;
   case 0x7: b17latch76=0;SPSG[0x5]=0;//printf("$%04x:$%02x\n",A,V);
-		break;
+        break;
   case 0x8:
-	   b17latch76=0;
-	//   printf("%d:$%02x, $%02x\n",SPSG[0x5],V,b17latch76);
-	   fdso.mwave[SPSG[0x5]&0x1F]=V&0x7;
+       b17latch76=0;
+    //   printf("%d:$%02x, $%02x\n",SPSG[0x5],V,b17latch76);
+       fdso.mwave[SPSG[0x5]&0x1F]=V&0x7;
            SPSG[0x5]=(SPSG[0x5]+1)&0x1F;
-	   break;
+       break;
  }
  //if(A>=0x7 && A!=0x8 && A<=0xF)
  //if(A==0xA || A==0x9)
@@ -663,21 +663,21 @@ static DECLFW(FDSWrite)
  switch(A)
  {
   case 0x4020:
-	X6502_IRQEnd(FCEU_IQEXT);
-	IRQLatch&=0xFF00;
-	IRQLatch|=V;
+    X6502_IRQEnd(FCEU_IQEXT);
+    IRQLatch&=0xFF00;
+    IRQLatch|=V;
 //  printf("$%04x:$%02x\n",A,V);
         break;
   case 0x4021:
         X6502_IRQEnd(FCEU_IQEXT);
-	IRQLatch&=0xFF;
-	IRQLatch|=V<<8;
+    IRQLatch&=0xFF;
+    IRQLatch|=V<<8;
 //  printf("$%04x:$%02x\n",A,V);
         break;
   case 0x4022:
-	X6502_IRQEnd(FCEU_IQEXT);
-	IRQCount=IRQLatch;
-	IRQa=V&3;
+    X6502_IRQEnd(FCEU_IQEXT);
+    IRQCount=IRQLatch;
+    IRQa=V&3;
 //  printf("$%04x:$%02x\n",A,V);
         break;
   case 0x4023:break;
@@ -689,16 +689,16 @@ static DECLFW(FDSWrite)
           if(writeskip) writeskip--;
           else if(DiskPtr>=2)
           {
-	   DiskWritten=1;
+       DiskWritten=1;
            diskdata[InDisk][DiskPtr-2]=V;
           }
          }
         }
         break;
   case 0x4025:
-	X6502_IRQEnd(FCEU_IQEXT2);
-	if(InDisk!=255)
-	{
+    X6502_IRQEnd(FCEU_IQEXT2);
+    if(InDisk!=255)
+    {
          if(!(V&0x40))
          {
           if(FDSRegs[5]&0x40 && !(V&0x10))
@@ -711,7 +711,7 @@ static DECLFW(FDSWrite)
          if(!(V&0x4)) writeskip=2;
          if(V&2) {DiskPtr=0;DiskSeekIRQ=200;}
          if(V&0x40) DiskSeekIRQ=200;
-	}
+    }
         setmirror(((V>>3)&1)^1);
         break;
  }
@@ -952,4 +952,3 @@ void FDSClose(void)
   }
  ResetExState(0,0);
 }
-
